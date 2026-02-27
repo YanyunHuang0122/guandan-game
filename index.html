@@ -308,25 +308,94 @@
 
             // Single
             if (cards.length === 1) {
-                return { type: 'single', rank: ranks[0] };
+                return { type: 'single', rank: ranks[0], length: 1 };
             }
 
             // Pair
             if (cards.length === 2 && ranks[0] === ranks[1]) {
-                return { type: 'pair', rank: ranks[0] };
+                return { type: 'pair', rank: ranks[0], length: 1 };
             }
 
             // Triple
             if (cards.length === 3 && ranks[0] === ranks[1] && ranks[1] === ranks[2]) {
-                return { type: 'triple', rank: ranks[0] };
+                return { type: 'triple', rank: ranks[0], length: 1 };
             }
 
-            // Bomb (4 of a kind)
-            if (cards.length === 4 && ranks[0] === ranks[1] && ranks[1] === ranks[2] && ranks[2] === ranks[3]) {
-                return { type: 'bomb', rank: ranks[0], count: 4 };
+            // Bomb (4+ of a kind)
+            if (cards.length >= 4) {
+                let bombCount = 1;
+                for (let i = 1; i < cards.length; i++) {
+                    if (ranks[i] === ranks[0]) bombCount++;
+                    else break;
+                }
+                if (bombCount >= 4 && bombCount === cards.length) {
+                    return { type: 'bomb', rank: ranks[0], count: bombCount };
+                }
             }
 
-            return null; // Invalid or complex pattern
+            // Straight (5+ consecutive singles)
+            if (cards.length >= 5) {
+                let isConsecutive = true;
+                for (let i = 1; i < cards.length; i++) {
+                    if (ranks[i] !== ranks[i-1] + 1) {
+                        isConsecutive = false;
+                        break;
+                    }
+                }
+                if (isConsecutive && ranks[ranks.length-1] < 15) { // Can't include level card in straight
+                    return { type: 'straight', rank: ranks[ranks.length-1], length: cards.length };
+                }
+            }
+
+            // Pair straight (3+ consecutive pairs)
+            if (cards.length >= 6 && cards.length % 2 === 0) {
+                const pairs = [];
+                for (let i = 0; i < cards.length; i += 2) {
+                    if (ranks[i] === ranks[i+1]) {
+                        pairs.push(ranks[i]);
+                    } else {
+                        break;
+                    }
+                }
+                if (pairs.length >= 3 && pairs.length === cards.length / 2) {
+                    let isConsecutive = true;
+                    for (let i = 1; i < pairs.length; i++) {
+                        if (pairs[i] !== pairs[i-1] + 1) {
+                            isConsecutive = false;
+                            break;
+                        }
+                    }
+                    if (isConsecutive && pairs[pairs.length-1] < 15) {
+                        return { type: 'pair_straight', rank: pairs[pairs.length-1], length: pairs.length };
+                    }
+                }
+            }
+
+            // Triple straight (2+ consecutive triples)
+            if (cards.length >= 6 && cards.length % 3 === 0) {
+                const triples = [];
+                for (let i = 0; i < cards.length; i += 3) {
+                    if (ranks[i] === ranks[i+1] && ranks[i+1] === ranks[i+2]) {
+                        triples.push(ranks[i]);
+                    } else {
+                        break;
+                    }
+                }
+                if (triples.length >= 2 && triples.length === cards.length / 3) {
+                    let isConsecutive = true;
+                    for (let i = 1; i < triples.length; i++) {
+                        if (triples[i] !== triples[i-1] + 1) {
+                            isConsecutive = false;
+                            break;
+                        }
+                    }
+                    if (isConsecutive && triples[triples.length-1] < 15) {
+                        return { type: 'triple_straight', rank: triples[triples.length-1], length: triples.length };
+                    }
+                }
+            }
+
+            return null; // Invalid pattern
         }
 
         // Check if play1 beats play2
@@ -337,14 +406,21 @@
             if (pattern1.type === 'bomb' && pattern2.type !== 'bomb') return true;
             if (pattern1.type !== 'bomb' && pattern2.type === 'bomb') return false;
 
-            // Must be same type
-            if (pattern1.type !== pattern2.type) return false;
-
-            // Compare ranks
-            if (pattern1.type === 'bomb') {
+            // Both bombs - compare count first, then rank
+            if (pattern1.type === 'bomb' && pattern2.type === 'bomb') {
+                if (pattern1.count !== pattern2.count) {
+                    return pattern1.count > pattern2.count;
+                }
                 return pattern1.rank > pattern2.rank;
             }
 
+            // Must be same type and length for straights
+            if (pattern1.type !== pattern2.type) return false;
+            if (pattern1.type === 'straight' || pattern1.type === 'pair_straight' || pattern1.type === 'triple_straight') {
+                if (pattern1.length !== pattern2.length) return false;
+            }
+
+            // Compare ranks
             return pattern1.rank > pattern2.rank;
         }
 
@@ -478,9 +554,9 @@
                 msgEl.className = 'error-msg';
 
                 if (lastPlayPattern) {
-                    showMessage(`❌ Invalid! Must play ${lastPlayPattern.type} that beats rank ${lastPlayPattern.rank}`);
+                    showMessage(`❌ Invalid! Must play ${lastPlayPattern.type} (length ${lastPlayPattern.length || 1}) that beats rank ${lastPlayPattern.rank}`);
                 } else {
-                    showMessage('❌ Invalid pattern! Try: 1 card, pair (2 same), triple (3 same), or bomb (4 same)');
+                    showMessage('❌ Invalid pattern! Valid: single, pair, triple, bomb (4+), straight (5+), pair straight (6+), triple straight (6+)');
                 }
 
                 setTimeout(() => {
@@ -547,7 +623,8 @@
 
             if (currentPlayer === 0) {
                 if (lastPlayPattern) {
-                    showMessage(`Your turn! Must beat ${lastPlayPattern.type} rank ${lastPlayPattern.rank}`);
+                    const lengthMsg = lastPlayPattern.length ? ` (${lastPlayPattern.length} cards)` : '';
+                    showMessage(`Your turn! Must beat ${lastPlayPattern.type}${lengthMsg} rank ${lastPlayPattern.rank}`);
                 } else {
                     showMessage('Your turn! You lead - play anything.');
                 }
@@ -568,15 +645,16 @@
 
             const names = ['', 'Left', 'Top', 'Right'];
 
-            // Simple AI: try to play valid cards or pass
+            // Check if partner played last
             const isPartner = (currentPlayer === 2 && lastPlayPlayer === 0) ||
                              (currentPlayer === 0 && lastPlayPlayer === 2) ||
                              (currentPlayer === 1 && lastPlayPlayer === 3) ||
                              (currentPlayer === 3 && lastPlayPlayer === 1);
 
-            const shouldPass = lastPlay.length > 0 && (Math.random() < 0.5 || (isPartner && Math.random() < 0.7));
+            // AI strategy: pass if partner played (70% chance) or randomly (30% chance)
+            const shouldTryPass = lastPlay.length > 0 && (isPartner ? Math.random() < 0.7 : Math.random() < 0.3);
 
-            if (shouldPass) {
+            if (shouldTryPass) {
                 showMessage(names[currentPlayer] + ' passed.');
                 passCount++;
 
@@ -593,40 +671,126 @@
 
                 updateUI();
                 setTimeout(nextTurn, 800);
-            } else {
-                // Try to play valid cards
-                let cards = [];
+                return;
+            }
 
-                if (!lastPlayPattern) {
-                    // Leading - play 1-2 cards
-                    const num = Math.min(Math.random() < 0.5 ? 1 : 2, hands[currentPlayer].length);
-                    cards = hands[currentPlayer].splice(0, num);
-                } else {
-                    // Try to beat - simplified: take random cards
-                    const num = lastPlay.length;
-                    cards = hands[currentPlayer].splice(0, Math.min(num, hands[currentPlayer].length));
+            // Try to find valid cards to play
+            let validPlay = null;
+
+            if (!lastPlayPattern) {
+                // Leading - play smallest valid pattern
+                // Try single first
+                if (hands[currentPlayer].length > 0) {
+                    validPlay = [hands[currentPlayer][0]];
+                }
+            } else {
+                // Try to beat previous play
+                const targetType = lastPlayPattern.type;
+                const targetRank = lastPlayPattern.rank;
+                const targetLength = lastPlayPattern.length || 1;
+
+                // Try to find cards that beat the previous play
+                if (targetType === 'single') {
+                    // Find single card with higher rank
+                    for (let card of hands[currentPlayer]) {
+                        if (getEffectiveRank(card) > targetRank) {
+                            validPlay = [card];
+                            break;
+                        }
+                    }
+                } else if (targetType === 'pair') {
+                    // Find pair with higher rank
+                    for (let i = 0; i < hands[currentPlayer].length - 1; i++) {
+                        const r1 = getEffectiveRank(hands[currentPlayer][i]);
+                        const r2 = getEffectiveRank(hands[currentPlayer][i+1]);
+                        if (r1 === r2 && r1 > targetRank) {
+                            validPlay = [hands[currentPlayer][i], hands[currentPlayer][i+1]];
+                            break;
+                        }
+                    }
+                } else if (targetType === 'triple') {
+                    // Find triple with higher rank
+                    for (let i = 0; i < hands[currentPlayer].length - 2; i++) {
+                        const r1 = getEffectiveRank(hands[currentPlayer][i]);
+                        const r2 = getEffectiveRank(hands[currentPlayer][i+1]);
+                        const r3 = getEffectiveRank(hands[currentPlayer][i+2]);
+                        if (r1 === r2 && r2 === r3 && r1 > targetRank) {
+                            validPlay = [hands[currentPlayer][i], hands[currentPlayer][i+1], hands[currentPlayer][i+2]];
+                            break;
+                        }
+                    }
                 }
 
-                const pattern = identifyPattern(cards);
-                lastPlay = cards;
-                lastPlayPattern = pattern;
-                lastPlayPlayer = currentPlayer;
-                passCount = 0;
+                // Try bomb if no valid play found
+                if (!validPlay) {
+                    for (let i = 0; i < hands[currentPlayer].length - 3; i++) {
+                        const r1 = getEffectiveRank(hands[currentPlayer][i]);
+                        let bombSize = 1;
+                        for (let j = i + 1; j < hands[currentPlayer].length; j++) {
+                            if (getEffectiveRank(hands[currentPlayer][j]) === r1) {
+                                bombSize++;
+                            } else {
+                                break;
+                            }
+                        }
+                        if (bombSize >= 4) {
+                            validPlay = hands[currentPlayer].slice(i, i + bombSize);
+                            break;
+                        }
+                    }
+                }
+            }
 
-                const patternName = pattern ? pattern.type : 'cards';
-                showMessage(names[currentPlayer] + ' played ' + patternName + '.');
-                updateUI();
+            // If no valid play found, pass
+            if (!validPlay || !isValidPlay(validPlay)) {
+                showMessage(names[currentPlayer] + ' passed (no valid play).');
+                passCount++;
 
-                if (hands[currentPlayer].length === 0) {
-                    setTimeout(() => {
-                        alert(names[currentPlayer] + ' finished! Round ends.');
-                        location.reload();
-                    }, 500);
+                if (passCount >= 3) {
+                    lastPlay = [];
+                    lastPlayPattern = null;
+                    lastPlayPlayer = -1;
+                    passCount = 0;
+                    showMessage(names[currentPlayer] + ' leads (all passed).');
+                    updateUI();
+                    setTimeout(aiPlay, 800);
                     return;
                 }
 
-                setTimeout(nextTurn, 1000);
+                updateUI();
+                setTimeout(nextTurn, 800);
+                return;
             }
+
+            // Remove cards from AI hand
+            validPlay.forEach(card => {
+                const idx = hands[currentPlayer].findIndex(c =>
+                    c.rank === card.rank && c.suit === card.suit
+                );
+                if (idx >= 0) {
+                    hands[currentPlayer].splice(idx, 1);
+                }
+            });
+
+            const pattern = identifyPattern(validPlay);
+            lastPlay = validPlay;
+            lastPlayPattern = pattern;
+            lastPlayPlayer = currentPlayer;
+            passCount = 0;
+
+            const patternName = pattern ? pattern.type : 'cards';
+            showMessage(names[currentPlayer] + ' played ' + patternName + '.');
+            updateUI();
+
+            if (hands[currentPlayer].length === 0) {
+                setTimeout(() => {
+                    alert(names[currentPlayer] + ' finished! Round ends.');
+                    location.reload();
+                }, 500);
+                return;
+            }
+
+            setTimeout(nextTurn, 1000);
         }
 
         function showMessage(msg) {
