@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2E7D32">
+    <title>掼蛋 Guandan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+            color: white;
+            overflow-y: auto;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 60px;
+            text-align: center;
+            margin: 30px 0;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .info {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 15px;
+            margin: 10px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #game-area {
+            display: none;
+        }
+
+        .card {
+            display: inline-block;
+            width: 50px;
+            height: 70px;
+            background: white;
+            border-radius: 6px;
+            margin: 3px;
+            text-align: center;
+            line-height: 70px;
+            font-size: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card.selected {
+            transform: translateY(-15px);
+            border: 3px solid #1976D2;
+        }
+
+        .card.red { color: #D32F2F; }
+        .card.black { color: #000; }
+
+        #hand {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            min-height: 100px;
+        }
+
+        #message {
+            background: rgba(255,255,255,0.95);
+            color: #1B5E20;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .opponent {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        #play-area {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            min-height: 80px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+        }
+
+        .btn-pass {
+            background: linear-gradient(135deg, #F57C00 0%, #EF6C00 100%);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="menu">
+            <h1>掼蛋</h1>
+            <div class="info">
+                <h3>Guandan Card Game</h3>
+                <p>4 players • 2 teams • Level 2 to A</p>
+            </div>
+            <button onclick="startGame()">Start Game</button>
+        </div>
+
+        <div id="game-area">
+            <div class="info">
+                Level: <span id="level">2</span> |
+                You & Top vs Left & Right
+            </div>
+
+            <div class="opponent">
+                <strong>Top (Partner)</strong> - <span id="top-count">27</span> cards
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div class="opponent" style="flex: 1;">
+                    <strong>Left</strong><br><span id="left-count">27</span> cards
+                </div>
+                <div id="play-area">
+                    <div id="last-play">No cards played</div>
+                </div>
+                <div class="opponent" style="flex: 1;">
+                    <strong>Right</strong><br><span id="right-count">27</span> cards
+                </div>
+            </div>
+
+            <div id="message">Your turn! Select cards and play.</div>
+
+            <div id="hand">
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <strong>Your Hand (<span id="hand-count">27</span> cards)</strong>
+                </div>
+                <div id="hand-cards"></div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-play" id="play-btn" onclick="playCards()">Play Selected</button>
+                <button class="btn-pass" id="pass-btn" onclick="pass()">Pass</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple card game implementation
+        const suits = ['♥', '♦', '♣', '♠'];
+        const ranks = ['3','4','5','6','7','8','9','10','J','Q','K','A','2'];
+
+        let deck = [];
+        let hands = [[],[],[],[]]; // 0=you, 1=left, 2=top, 3=right
+        let selected = [];
+        let lastPlay = [];
+        let currentPlayer = 0;
+        let level = '2';
+
+        function createDeck() {
+            deck = [];
+            // Two standard decks
+            for (let d = 0; d < 2; d++) {
+                for (let suit of suits) {
+                    for (let rank of ranks) {
+                        deck.push({ rank, suit, color: (suit === '♥' || suit === '♦') ? 'red' : 'black' });
+                    }
+                }
+            }
+            // Add 4 jokers
+            deck.push({ rank: '🃏', suit: '', color: 'red' });
+            deck.push({ rank: '🃏', suit: '', color: 'red' });
+            deck.push({ rank: '🃏', suit: '', color: 'black' });
+            deck.push({ rank: '🃏', suit: '', color: 'black' });
+        }
+
+        function shuffle() {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function dealCards() {
+            hands = [[],[],[],[]];
+            for (let i = 0; i < 27; i++) {
+                for (let p = 0; p < 4; p++) {
+                    hands[p].push(deck.pop());
+                }
+            }
+        }
+
+        function startGame() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game-area').style.display = 'block';
+
+            createDeck();
+            shuffle();
+            dealCards();
+
+            renderHand();
+            updateUI();
+            showMessage('Your turn! Select cards and play.');
+        }
+
+        function renderHand() {
+            const handEl = document.getElementById('hand-cards');
+            handEl.innerHTML = '';
+
+            hands[0].forEach((card, idx) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card ' + card.color;
+                cardEl.textContent = card.rank + card.suit;
+                cardEl.onclick = () => toggleCard(idx);
+                if (selected.includes(idx)) {
+                    cardEl.classList.add('selected');
+                }
+                handEl.appendChild(cardEl);
+            });
+        }
+
+        function toggleCard(idx) {
+            if (currentPlayer !== 0) return;
+
+            const pos = selected.indexOf(idx);
+            if (pos > -1) {
+                selected.splice(pos, 1);
+            } else {
+                selected.push(idx);
+            }
+            renderHand();
+            updateButtons();
+        }
+
+        function updateButtons() {
+            const playBtn = document.getElementById('play-btn');
+            const passBtn = document.getElementById('pass-btn');
+
+            playBtn.disabled = !(currentPlayer === 0 && selected.length > 0);
+            passBtn.disabled = !(currentPlayer === 0 && lastPlay.length > 0);
+        }
+
+        function updateUI() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('hand-count').textContent = hands[0].length;
+            document.getElementById('left-count').textContent = hands[1].length;
+            document.getElementById('top-count').textContent = hands[2].length;
+            document.getElementById('right-count').textContent = hands[3].length;
+
+            if (lastPlay.length === 0) {
+                document.getElementById('last-play').textContent = 'No cards played';
+            } else {
+                document.getElementById('last-play').textContent = lastPlay.map(c => c.rank + c.suit).join(' ');
+            }
+
+            updateButtons();
+        }
+
+        function playCards() {
+            if (currentPlayer !== 0 || selected.length === 0) return;
+
+            // Get selected cards
+            const cards = selected.sort((a,b) => b-a).map(idx => {
+                return hands[0].splice(idx, 1)[0];
+            });
+
+            lastPlay = cards;
+            selected = [];
+
+            showMessage('You played ' + cards.length + ' card(s)!');
+            renderHand();
+            updateUI();
+
+            // Check if won
+            if (hands[0].length === 0) {
+                setTimeout(() => {
+                    alert('🎉 You finished first! You win! 🎉');
+                    location.reload();
+                }, 500);
+                return;
+            }
+
+            nextTurn();
+        }
+
+        function pass() {
+            if (currentPlayer !== 0 || lastPlay.length === 0) return;
+
+            showMessage('You passed.');
+            selected = [];
+            renderHand();
+            nextTurn();
+        }
+
+        function nextTurn() {
+            currentPlayer = (currentPlayer + 1) % 4;
+
+            if (currentPlayer === 0) {
+                showMessage('Your turn!');
+                updateButtons();
+            } else {
+                const names = ['', 'Left', 'Top', 'Right'];
+                showMessage(names[currentPlayer] + "'s turn...");
+                updateButtons();
+
+                // AI plays after 1 second
+                setTimeout(aiPlay, 1000);
+            }
+        }
+
+        function aiPlay() {
+            if (hands[currentPlayer].length === 0) {
+                nextTurn();
+                return;
+            }
+
+            // Simple AI: randomly play 1-3 cards or pass
+            const shouldPass = lastPlay.length > 0 && Math.random() < 0.4;
+
+            if (shouldPass) {
+                const names = ['', 'Left', 'Top', 'Right'];
+                showMessage(names[currentPlayer] + ' passed.');
+                nextTurn();
+            } else {
+                // Play 1-3 cards
+                const numCards = Math.min(Math.floor(Math.random() * 3) + 1, hands[currentPlayer].length);
+                const cards = hands[currentPlayer].splice(0, numCards);
+                lastPlay = cards;
+
+                const names = ['', 'Left', 'Top', 'Right'];
+                showMessage(names[currentPlayer] + ' played ' + numCards + ' card(s).');
+                updateUI();
+
+                // Check if AI won
+                if (hands[currentPlayer].length === 0) {
+                    setTimeout(() => {
+                        alert(names[currentPlayer] + ' finished first! They win!');
+                        location.reload();
+                    }, 500);
+                    return;
+                }
+
+                setTimeout(nextTurn, 800);
+            }
+        }
+
+        function showMessage(msg) {
+            document.getElementById('message').textContent = msg;
+        }
+    </script>
+</body>
+</html>
