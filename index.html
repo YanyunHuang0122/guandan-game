@@ -4,134 +4,523 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Guandan">
     <meta name="theme-color" content="#2E7D32">
-
     <title>掼蛋 Guandan</title>
-
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-
-    <!-- Prevent text selection and callouts on iOS -->
     <style>
         * {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+            color: white;
+            overflow: auto;
+            min-height: 100vh;
+            padding: 5px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 48px;
+            text-align: center;
+            margin: 10px 0;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .info {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 12px;
+            margin: 10px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #game-area {
+            display: none;
+        }
+
+        .card {
+            display: inline-block;
+            width: 45px;
+            height: 65px;
+            background: white;
+            border-radius: 5px;
+            margin: 2px;
+            text-align: center;
+            padding-top: 8px;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            vertical-align: bottom;
+        }
+
+        .card.selected {
+            transform: translateY(-15px);
+            border: 3px solid #1976D2;
+            box-shadow: 0 4px 8px rgba(25, 118, 210, 0.5);
+        }
+
+        .card.red { color: #D32F2F; }
+        .card.black { color: #000; }
+
+        .card-rank {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .card-suit {
+            font-size: 18px;
+        }
+
+        #hand {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #message {
+            background: rgba(255,255,255,0.95);
+            color: #1B5E20;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .opponent {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 8px 0;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        #play-area {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 70px;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .layout {
+            display: flex;
+            gap: 5px;
+            margin: 5px 0;
+        }
+
+        .layout > div {
+            flex: 1;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+        }
+
+        .btn-pass {
+            background: linear-gradient(135deg, #F57C00 0%, #EF6C00 100%);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+        }
+
+        #last-play-cards {
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
-    <!-- Main Menu Screen -->
-    <div id="main-menu" class="screen">
-        <div class="menu-container">
-            <h1 class="game-title">掼蛋</h1>
-            <h2 class="game-subtitle">Guandan Card Game</h2>
+    <div class="container">
+        <div id="menu">
+            <h1>掼蛋</h1>
+            <div class="info">
+                <h3>Guandan Card Game</h3>
+                <p>4 players • 2 teams • Progress from 2 to A</p>
+                <p>You & Top vs Left & Right</p>
+            </div>
+            <button onclick="startGame()">Start Game</button>
+        </div>
 
-            <button id="start-game-btn" class="btn-primary">Start Game</button>
+        <div id="game-area">
+            <div class="info">
+                <strong>Level Card: <span id="level">2</span></strong> |
+                Team 1: <span id="team1-level">2</span> |
+                Team 2: <span id="team2-level">2</span>
+            </div>
 
-            <div class="rules-info">
-                <h3>Rules:</h3>
-                <p>4 players, 2 teams</p>
-                <p>Advance from 2 to A</p>
-                <p>First team to A wins!</p>
+            <div class="opponent">
+                <strong>Top (Partner)</strong> - <span id="top-count">27</span> cards
+            </div>
+
+            <div class="layout">
+                <div class="opponent">
+                    <strong>Left</strong><br>
+                    <span id="left-count">27</span> cards
+                </div>
+                <div id="play-area">
+                    <strong>Last Play:</strong>
+                    <div id="last-play-info">No cards played</div>
+                    <div id="last-play-cards"></div>
+                </div>
+                <div class="opponent">
+                    <strong>Right</strong><br>
+                    <span id="right-count">27</span> cards
+                </div>
+            </div>
+
+            <div id="message">Your turn! Select cards and play.</div>
+
+            <div id="hand">
+                <div style="text-align: center; margin-bottom: 8px; font-size: 13px;">
+                    <strong>Your Hand (<span id="hand-count">27</span> cards)</strong>
+                </div>
+                <div id="hand-cards" style="text-align: center;"></div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-play" id="play-btn" onclick="playCards()">Play Selected</button>
+                <button class="btn-pass" id="pass-btn" onclick="pass()">Pass</button>
             </div>
         </div>
     </div>
 
-    <!-- Game Board Screen -->
-    <div id="game-board" class="screen hidden">
-        <!-- Top Player (Partner) -->
-        <div id="top-player" class="opponent-area top">
-            <div class="player-info">
-                <span class="player-name">Top</span>
-                <span class="card-count">27</span>
-            </div>
-            <div class="opponent-cards">
-                <!-- Card backs will be added here -->
-            </div>
-        </div>
-
-        <!-- Left and Right Players with Center Play Area -->
-        <div class="middle-section">
-            <!-- Left Player -->
-            <div id="left-player" class="opponent-area left">
-                <div class="player-info vertical">
-                    <span class="player-name">Left</span>
-                    <span class="card-count">27</span>
-                </div>
-                <div class="opponent-cards vertical">
-                    <!-- Card backs -->
-                </div>
-            </div>
-
-            <!-- Center Play Area -->
-            <div id="play-area" class="play-area">
-                <div id="last-play-display" class="last-play">
-                    <p class="no-cards-text">No cards played</p>
-                    <div id="played-cards-container"></div>
-                </div>
-
-                <!-- Game Info -->
-                <div id="game-info" class="game-info">
-                    Level: 2 | Team 1: 2 | Team 2: 2
-                </div>
-            </div>
-
-            <!-- Right Player -->
-            <div id="right-player" class="opponent-area right">
-                <div class="player-info vertical">
-                    <span class="player-name">Right</span>
-                    <span class="card-count">27</span>
-                </div>
-                <div class="opponent-cards vertical">
-                    <!-- Card backs -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Message Display -->
-        <div id="message-display" class="message-display">
-            Game started! Your turn.
-        </div>
-
-        <!-- Human Player Hand (Bottom) -->
-        <div id="player-hand" class="player-hand">
-            <div class="hand-label">Your Hand (<span id="hand-count">27</span> cards)</div>
-            <div id="hand-cards" class="hand-cards">
-                <!-- Player's cards will be added here -->
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-            <button id="play-btn" class="btn-action btn-play" disabled>Play</button>
-            <button id="pass-btn" class="btn-action btn-pass" disabled>Pass</button>
-        </div>
-    </div>
-
-    <!-- Loading Screen -->
-    <div id="loading" class="screen hidden">
-        <div class="loading-spinner"></div>
-        <p>Loading game...</p>
-    </div>
-
-    <!-- Scripts -->
-    <script src="js/models.js"></script>
-    <script src="js/rules-engine.js"></script>
-    <script src="js/game-engine.js"></script>
-    <script src="js/ai-engine.js"></script>
-    <script src="js/game-controller.js"></script>
-    <script src="js/app.js"></script>
-
-    <!-- Service Worker Registration -->
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
-                .then(reg => console.log('Service Worker registered'))
-                .catch(err => console.log('Service Worker registration failed'));
+        // Card ranks and suits
+        const SUITS = ['♥', '♦', '♣', '♠'];
+        const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+
+        let deck = [];
+        let hands = [[],[],[],[]]; // 0=you, 1=left, 2=top, 3=right
+        let selected = [];
+        let lastPlay = [];
+        let lastPlayPlayer = -1;
+        let currentPlayer = 0;
+        let levelCard = '2';
+        let team1Level = '2';
+        let team2Level = '2';
+        let passCount = 0;
+
+        function createDeck() {
+            deck = [];
+            for (let d = 0; d < 2; d++) {
+                for (let suit of SUITS) {
+                    for (let rank of RANKS) {
+                        deck.push({
+                            rank,
+                            suit,
+                            color: (suit === '♥' || suit === '♦') ? 'red' : 'black'
+                        });
+                    }
+                }
+            }
+            // 4 jokers
+            deck.push({ rank: '🃏', suit: '', color: 'red' });
+            deck.push({ rank: '🃏', suit: '', color: 'red' });
+            deck.push({ rank: 'JOKER', suit: '', color: 'black' });
+            deck.push({ rank: 'JOKER', suit: '', color: 'black' });
+        }
+
+        function shuffle() {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function dealCards() {
+            hands = [[],[],[],[]];
+            for (let i = 0; i < 27; i++) {
+                for (let p = 0; p < 4; p++) {
+                    hands[p].push(deck.pop());
+                }
+            }
+            sortHand(0);
+        }
+
+        function sortHand(playerIndex) {
+            hands[playerIndex].sort((a, b) => {
+                // Jokers to end
+                const aIsJoker = a.rank === '🃏' || a.rank === 'JOKER';
+                const bIsJoker = b.rank === '🃏' || b.rank === 'JOKER';
+
+                if (aIsJoker && !bIsJoker) return 1;
+                if (!aIsJoker && bIsJoker) return -1;
+                if (aIsJoker && bIsJoker) return 0;
+
+                const rankA = RANKS.indexOf(a.rank);
+                const rankB = RANKS.indexOf(b.rank);
+
+                if (rankA !== rankB) return rankA - rankB;
+
+                const suitA = SUITS.indexOf(a.suit);
+                const suitB = SUITS.indexOf(b.suit);
+                return suitA - suitB;
+            });
+        }
+
+        function startGame() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game-area').style.display = 'block';
+
+            createDeck();
+            shuffle();
+            dealCards();
+
+            currentPlayer = 0;
+            lastPlay = [];
+            lastPlayPlayer = -1;
+            passCount = 0;
+            selected = [];
+
+            renderHand();
+            updateUI();
+            showMessage('Your turn! Select cards to play.');
+        }
+
+        function renderHand() {
+            const handEl = document.getElementById('hand-cards');
+            handEl.innerHTML = '';
+
+            hands[0].forEach((card, idx) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card ' + card.color;
+
+                const rankEl = document.createElement('div');
+                rankEl.className = 'card-rank';
+                rankEl.textContent = card.rank === 'JOKER' ? '🃏' : card.rank;
+
+                const suitEl = document.createElement('div');
+                suitEl.className = 'card-suit';
+                suitEl.textContent = card.suit;
+
+                cardEl.appendChild(rankEl);
+                cardEl.appendChild(suitEl);
+
+                cardEl.onclick = () => toggleCard(idx);
+
+                if (selected.includes(idx)) {
+                    cardEl.classList.add('selected');
+                }
+
+                handEl.appendChild(cardEl);
+            });
+        }
+
+        function toggleCard(idx) {
+            if (currentPlayer !== 0) return;
+
+            const pos = selected.indexOf(idx);
+            if (pos > -1) {
+                selected.splice(pos, 1);
+            } else {
+                selected.push(idx);
+            }
+            renderHand();
+            updateButtons();
+        }
+
+        function updateButtons() {
+            const playBtn = document.getElementById('play-btn');
+            const passBtn = document.getElementById('pass-btn');
+
+            playBtn.disabled = !(currentPlayer === 0 && selected.length > 0);
+            passBtn.disabled = !(currentPlayer === 0 && lastPlay.length > 0);
+        }
+
+        function updateUI() {
+            document.getElementById('level').textContent = levelCard;
+            document.getElementById('team1-level').textContent = team1Level;
+            document.getElementById('team2-level').textContent = team2Level;
+            document.getElementById('hand-count').textContent = hands[0].length;
+            document.getElementById('left-count').textContent = hands[1].length;
+            document.getElementById('top-count').textContent = hands[2].length;
+            document.getElementById('right-count').textContent = hands[3].length;
+
+            const lastPlayCardsEl = document.getElementById('last-play-cards');
+            const lastPlayInfo = document.getElementById('last-play-info');
+
+            if (lastPlay.length === 0) {
+                lastPlayInfo.textContent = 'No cards played (leading)';
+                lastPlayCardsEl.innerHTML = '';
+            } else {
+                const playerNames = ['You', 'Left', 'Top', 'Right'];
+                lastPlayInfo.textContent = playerNames[lastPlayPlayer] + ' played ' + lastPlay.length + ' card(s):';
+                lastPlayCardsEl.innerHTML = lastPlay.map(c => {
+                    const displayRank = c.rank === 'JOKER' ? '🃏' : c.rank;
+                    return `<span style="color: ${c.color === 'red' ? '#D32F2F' : '#000'}; font-weight: bold; margin: 0 3px;">${displayRank}${c.suit}</span>`;
+                }).join('');
+            }
+
+            updateButtons();
+        }
+
+        function playCards() {
+            if (currentPlayer !== 0 || selected.length === 0) return;
+
+            const cards = selected.sort((a,b) => b-a).map(idx => {
+                return hands[0].splice(idx, 1)[0];
+            });
+
+            lastPlay = cards;
+            lastPlayPlayer = 0;
+            selected = [];
+            passCount = 0;
+
+            showMessage('You played ' + cards.length + ' card(s)!');
+            sortHand(0);
+            renderHand();
+            updateUI();
+
+            if (hands[0].length === 0) {
+                setTimeout(() => {
+                    alert('🎉 You finished! You win this round! 🎉');
+                    location.reload();
+                }, 500);
+                return;
+            }
+
+            nextTurn();
+        }
+
+        function pass() {
+            if (currentPlayer !== 0 || lastPlay.length === 0) return;
+
+            showMessage('You passed.');
+            selected = [];
+            passCount++;
+
+            if (passCount >= 3) {
+                lastPlay = [];
+                lastPlayPlayer = -1;
+                passCount = 0;
+                showMessage('All passed! You lead again.');
+                updateUI();
+                return;
+            }
+
+            renderHand();
+            updateUI();
+            nextTurn();
+        }
+
+        function nextTurn() {
+            do {
+                currentPlayer = (currentPlayer + 1) % 4;
+            } while (hands[currentPlayer].length === 0);
+
+            if (currentPlayer === 0) {
+                showMessage('Your turn!');
+                updateButtons();
+            } else {
+                const names = ['', 'Left', 'Top', 'Right'];
+                showMessage(names[currentPlayer] + "'s turn...");
+                updateButtons();
+                setTimeout(aiPlay, 1000);
+            }
+        }
+
+        function aiPlay() {
+            if (hands[currentPlayer].length === 0) {
+                nextTurn();
+                return;
+            }
+
+            const names = ['', 'Left', 'Top', 'Right'];
+
+            // Simple AI: 60% chance to pass if partner played last
+            const isPartner = (currentPlayer === 2 && lastPlayPlayer === 0) ||
+                             (currentPlayer === 0 && lastPlayPlayer === 2) ||
+                             (currentPlayer === 1 && lastPlayPlayer === 3) ||
+                             (currentPlayer === 3 && lastPlayPlayer === 1);
+
+            const shouldPass = lastPlay.length > 0 &&
+                              (Math.random() < 0.4 || (isPartner && Math.random() < 0.6));
+
+            if (shouldPass) {
+                showMessage(names[currentPlayer] + ' passed.');
+                passCount++;
+
+                if (passCount >= 3) {
+                    lastPlay = [];
+                    lastPlayPlayer = -1;
+                    passCount = 0;
+                    showMessage(names[currentPlayer] + ' leads (all others passed).');
+                    updateUI();
+                    setTimeout(aiPlay, 800);
+                    return;
+                }
+
+                updateUI();
+                setTimeout(nextTurn, 800);
+            } else {
+                const numCards = Math.min(
+                    Math.floor(Math.random() * 4) + 1,
+                    hands[currentPlayer].length
+                );
+                const cards = hands[currentPlayer].splice(0, numCards);
+                lastPlay = cards;
+                lastPlayPlayer = currentPlayer;
+                passCount = 0;
+
+                showMessage(names[currentPlayer] + ' played ' + numCards + ' card(s).');
+                updateUI();
+
+                if (hands[currentPlayer].length === 0) {
+                    setTimeout(() => {
+                        alert(names[currentPlayer] + ' finished! Round ends.');
+                        location.reload();
+                    }, 500);
+                    return;
+                }
+
+                setTimeout(nextTurn, 1000);
+            }
+        }
+
+        function showMessage(msg) {
+            document.getElementById('message').textContent = msg;
         }
     </script>
 </body>
