@@ -208,9 +208,8 @@
                     <div id="left-action" style="margin-top: 5px; font-size: 12px; min-height: 20px;">-</div>
                 </div>
                 <div id="play-area">
-                    <strong>Play Area:</strong>
-                    <div id="last-play-info">No cards played (you lead)</div>
-                    <div id="last-play-cards"></div>
+                    <strong>Current Turn</strong>
+                    <div id="last-play-info">You lead - play any pattern</div>
                 </div>
                 <div class="opponent">
                     <strong>Right</strong><br>
@@ -535,21 +534,16 @@
             document.getElementById('top-action').textContent = playerActions[2] || '-';
             document.getElementById('right-action').textContent = playerActions[3] || '-';
 
-            const lastPlayCardsEl = document.getElementById('last-play-cards');
             const lastPlayInfo = document.getElementById('last-play-info');
 
             if (lastPlay.length === 0) {
-                lastPlayInfo.textContent = 'No cards played (leading)';
-                lastPlayCardsEl.innerHTML = '';
+                const playerNames = ['You', 'Left', 'Top', 'Right'];
+                lastPlayInfo.textContent = playerNames[currentPlayer] + ' leads - play any pattern';
             } else {
                 const playerNames = ['You', 'Left', 'Top', 'Right'];
                 const patternName = lastPlayPattern ? lastPlayPattern.type : 'unknown';
-                lastPlayInfo.textContent = playerNames[lastPlayPlayer] + ' played ' + patternName + ':';
-                lastPlayCardsEl.innerHTML = lastPlay.map(c => {
-                    let displayRank = c.rank;
-                    if (c.rank === 'SMALL_JOKER' || c.rank === 'BIG_JOKER') displayRank = '🃏';
-                    return `<span style="color: ${c.color === 'red' ? '#D32F2F' : '#000'}; font-weight: bold; margin: 0 3px;">${displayRank}${c.suit}</span>`;
-                }).join('');
+                const lengthInfo = lastPlayPattern && lastPlayPattern.length ? ` (${lastPlayPattern.length})` : '';
+                lastPlayInfo.textContent = `Beat: ${patternName}${lengthInfo} rank ${lastPlayPattern.rank}`;
             }
 
             updateButtons();
@@ -690,12 +684,12 @@
                     playerActions = ['-', '-', '-', '-'];
                     showMessage(names[currentPlayer] + ' leads (all passed).');
                     updateUI();
-                    setTimeout(aiPlay, 800);
+                    setTimeout(aiPlay, 1500);
                     return;
                 }
 
                 updateUI();
-                setTimeout(nextTurn, 800);
+                setTimeout(nextTurn, 1500);
                 return;
             }
 
@@ -780,12 +774,12 @@
                     playerActions = ['-', '-', '-', '-'];
                     showMessage(names[currentPlayer] + ' leads (all passed).');
                     updateUI();
-                    setTimeout(aiPlay, 800);
+                    setTimeout(aiPlay, 1500);
                     return;
                 }
 
                 updateUI();
-                setTimeout(nextTurn, 800);
+                setTimeout(nextTurn, 1500);
                 return;
             }
 
@@ -821,11 +815,12 @@
                 setTimeout(() => {
                     alert(names[currentPlayer] + ' finished! Round ends.');
                     location.reload();
-                }, 500);
+                }, 2000);
                 return;
             }
 
-            setTimeout(nextTurn, 1000);
+            // Wait 2 seconds so player can see the cards played
+            setTimeout(nextTurn, 2000);
         }
 
         function showMessage(msg) {
