@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Guandan">
+    <meta name="theme-color" content="#2E7D32">
+
+    <title>掼蛋 Guandan</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <!-- Prevent text selection and callouts on iOS -->
+    <style>
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Menu Screen -->
+    <div id="main-menu" class="screen">
+        <div class="menu-container">
+            <h1 class="game-title">掼蛋</h1>
+            <h2 class="game-subtitle">Guandan Card Game</h2>
+
+            <button id="start-game-btn" class="btn-primary">Start Game</button>
+
+            <div class="rules-info">
+                <h3>Rules:</h3>
+                <p>4 players, 2 teams</p>
+                <p>Advance from 2 to A</p>
+                <p>First team to A wins!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Board Screen -->
+    <div id="game-board" class="screen hidden">
+        <!-- Top Player (Partner) -->
+        <div id="top-player" class="opponent-area top">
+            <div class="player-info">
+                <span class="player-name">Top</span>
+                <span class="card-count">27</span>
+            </div>
+            <div class="opponent-cards">
+                <!-- Card backs will be added here -->
+            </div>
+        </div>
+
+        <!-- Left and Right Players with Center Play Area -->
+        <div class="middle-section">
+            <!-- Left Player -->
+            <div id="left-player" class="opponent-area left">
+                <div class="player-info vertical">
+                    <span class="player-name">Left</span>
+                    <span class="card-count">27</span>
+                </div>
+                <div class="opponent-cards vertical">
+                    <!-- Card backs -->
+                </div>
+            </div>
+
+            <!-- Center Play Area -->
+            <div id="play-area" class="play-area">
+                <div id="last-play-display" class="last-play">
+                    <p class="no-cards-text">No cards played</p>
+                    <div id="played-cards-container"></div>
+                </div>
+
+                <!-- Game Info -->
+                <div id="game-info" class="game-info">
+                    Level: 2 | Team 1: 2 | Team 2: 2
+                </div>
+            </div>
+
+            <!-- Right Player -->
+            <div id="right-player" class="opponent-area right">
+                <div class="player-info vertical">
+                    <span class="player-name">Right</span>
+                    <span class="card-count">27</span>
+                </div>
+                <div class="opponent-cards vertical">
+                    <!-- Card backs -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Display -->
+        <div id="message-display" class="message-display">
+            Game started! Your turn.
+        </div>
+
+        <!-- Human Player Hand (Bottom) -->
+        <div id="player-hand" class="player-hand">
+            <div class="hand-label">Your Hand (<span id="hand-count">27</span> cards)</div>
+            <div id="hand-cards" class="hand-cards">
+                <!-- Player's cards will be added here -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button id="play-btn" class="btn-action btn-play" disabled>Play</button>
+            <button id="pass-btn" class="btn-action btn-pass" disabled>Pass</button>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="screen hidden">
+        <div class="loading-spinner"></div>
+        <p>Loading game...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/models.js"></script>
+    <script src="js/rules-engine.js"></script>
+    <script src="js/game-engine.js"></script>
+    <script src="js/ai-engine.js"></script>
+    <script src="js/game-controller.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed'));
+        }
+    </script>
+</body>
+</html>
