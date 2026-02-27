@@ -108,38 +108,29 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        #message {
-            background: rgba(255,255,255,0.95);
-            color: #1B5E20;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
-            margin: 10px 0;
-            font-size: 14px;
-        }
-
-        .error-msg {
-            background: rgba(255,0,0,0.8) !important;
-            color: white !important;
-        }
-
         .opponent {
             background: rgba(0,0,0,0.2);
-            padding: 10px;
+            padding: 8px;
             border-radius: 8px;
-            margin: 8px 0;
+            margin: 5px 0;
             text-align: center;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         #play-area {
             background: rgba(0,0,0,0.3);
-            padding: 15px;
+            padding: 12px;
             border-radius: 10px;
-            min-height: 70px;
+            min-height: 60px;
             text-align: center;
-            margin: 10px 0;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+
+        #turn-message {
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 5px;
             font-size: 14px;
         }
 
@@ -196,29 +187,26 @@
                 Team 2: <span id="team2-level">2</span>
             </div>
 
-            <div class="opponent">
-                <strong>Top (Partner)</strong> - <span id="top-count">27</span> cards<br>
-                <div id="top-action" style="margin-top: 5px; font-size: 12px; min-height: 20px;">-</div>
-            </div>
-
             <div class="layout">
                 <div class="opponent">
-                    <strong>Left</strong><br>
-                    <span id="left-count">27</span> cards<br>
-                    <div id="left-action" style="margin-top: 5px; font-size: 12px; min-height: 20px;">-</div>
+                    <strong>Left</strong> - <span id="left-count">27</span><br>
+                    <div id="left-action" style="margin-top: 3px; font-size: 11px; min-height: 18px;">-</div>
                 </div>
-                <div id="play-area">
-                    <strong>Current Turn</strong>
-                    <div id="last-play-info">You lead - play any pattern</div>
+                <div>
+                    <div class="opponent" style="margin-bottom: 5px;">
+                        <strong>Top (Partner)</strong> - <span id="top-count">27</span><br>
+                        <div id="top-action" style="margin-top: 3px; font-size: 11px; min-height: 18px;">-</div>
+                    </div>
+                    <div id="play-area">
+                        <div id="turn-message" style="font-weight: bold; color: #FFD700; margin-bottom: 5px;">Your turn!</div>
+                        <div id="last-play-info" style="font-size: 12px;">You lead - play any pattern</div>
+                    </div>
                 </div>
                 <div class="opponent">
-                    <strong>Right</strong><br>
-                    <span id="right-count">27</span> cards<br>
-                    <div id="right-action" style="margin-top: 5px; font-size: 12px; min-height: 20px;">-</div>
+                    <strong>Right</strong> - <span id="right-count">27</span><br>
+                    <div id="right-action" style="margin-top: 3px; font-size: 11px; min-height: 18px;">-</div>
                 </div>
             </div>
-
-            <div id="message">Your turn! Select cards and play.</div>
 
             <div id="hand">
                 <div style="text-align: center; margin-bottom: 8px; font-size: 13px;">
@@ -606,8 +594,9 @@
 
             // Validate play
             if (!isValidPlay(cards)) {
-                const msgEl = document.getElementById('message');
-                msgEl.className = 'error-msg';
+                const turnMsg = document.getElementById('turn-message');
+                const oldColor = turnMsg.style.color;
+                turnMsg.style.color = '#FF4444';
 
                 if (lastPlayPattern) {
                     showMessage(`❌ Invalid! Must play ${lastPlayPattern.type} (length ${lastPlayPattern.length || 1}) that beats rank ${lastPlayPattern.rank}`);
@@ -616,7 +605,7 @@
                 }
 
                 setTimeout(() => {
-                    msgEl.className = '';
+                    turnMsg.style.color = oldColor;
                     showMessage('Try again - select valid cards');
                 }, 2000);
                 return;
@@ -893,7 +882,7 @@
         }
 
         function showMessage(msg) {
-            document.getElementById('message').textContent = msg;
+            document.getElementById('turn-message').textContent = msg;
         }
     </script>
 </body>
