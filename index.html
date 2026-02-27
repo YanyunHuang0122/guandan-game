@@ -454,7 +454,8 @@
             shuffle();
             dealCards();
 
-            currentPlayer = 0;
+            // Random starting player (0-3)
+            currentPlayer = Math.floor(Math.random() * 4);
             lastPlay = [];
             lastPlayPattern = null;
             lastPlayPlayer = -1;
@@ -464,7 +465,13 @@
 
             renderHand();
             updateUI();
-            showMessage('Your turn! You lead - play any valid pattern.');
+
+            const playerNames = ['You', 'Right', 'Top', 'Left'];
+            showMessage(playerNames[currentPlayer] + ' leads! Play any valid pattern.');
+
+            if (currentPlayer !== 0) {
+                setTimeout(aiPlay, 1000);
+            }
         }
 
         function renderHand() {
@@ -618,13 +625,21 @@
             passCount++;
 
             if (passCount >= 3) {
+                // Winner (lastPlayPlayer) leads next
+                currentPlayer = lastPlayPlayer;
                 lastPlay = [];
                 lastPlayPattern = null;
                 lastPlayPlayer = -1;
                 passCount = 0;
                 playerActions = ['-', '-', '-', '-'];
-                showMessage('All passed! You lead again.');
+
+                const playerNames = ['You', 'Right', 'Top', 'Left'];
+                showMessage('All passed! ' + playerNames[currentPlayer] + ' leads.');
                 updateUI();
+
+                if (currentPlayer !== 0) {
+                    setTimeout(aiPlay, 2000);
+                }
                 return;
             }
 
@@ -678,6 +693,8 @@
                 passCount++;
 
                 if (passCount >= 3) {
+                    // Winner (lastPlayPlayer) leads next
+                    currentPlayer = lastPlayPlayer;
                     lastPlay = [];
                     lastPlayPattern = null;
                     lastPlayPlayer = -1;
@@ -685,7 +702,10 @@
                     playerActions = ['-', '-', '-', '-'];
                     showMessage(names[currentPlayer] + ' leads (all passed).');
                     updateUI();
-                    setTimeout(aiPlay, 2000);
+
+                    if (currentPlayer !== 0) {
+                        setTimeout(aiPlay, 2000);
+                    }
                     return;
                 }
 
@@ -768,6 +788,8 @@
                 passCount++;
 
                 if (passCount >= 3) {
+                    // Winner (lastPlayPlayer) leads next
+                    currentPlayer = lastPlayPlayer;
                     lastPlay = [];
                     lastPlayPattern = null;
                     lastPlayPlayer = -1;
@@ -775,7 +797,10 @@
                     playerActions = ['-', '-', '-', '-'];
                     showMessage(names[currentPlayer] + ' leads (all passed).');
                     updateUI();
-                    setTimeout(aiPlay, 2000);
+
+                    if (currentPlayer !== 0) {
+                        setTimeout(aiPlay, 2000);
+                    }
                     return;
                 }
 
