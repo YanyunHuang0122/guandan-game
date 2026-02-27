@@ -1,0 +1,24 @@
+{
+  "name": "Guandan Card Game",
+  "short_name": "Guandan",
+  "description": "Traditional Chinese Guandan card game - 4 players, 2 teams",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#2E7D32",
+  "theme_color": "#2E7D32",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
