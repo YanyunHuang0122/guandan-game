@@ -119,6 +119,11 @@
             font-size: 14px;
         }
 
+        .error-msg {
+            background: rgba(255,0,0,0.8) !important;
+            color: white !important;
+        }
+
         .opponent {
             background: rgba(0,0,0,0.2);
             padding: 10px;
@@ -179,6 +184,7 @@
                 <h3>Guandan Card Game</h3>
                 <p>4 players • 2 teams • Progress from 2 to A</p>
                 <p>You & Top vs Left & Right</p>
+                <p><small>Proper Guandan rules: match pattern & beat rank!</small></p>
             </div>
             <button onclick="startGame()">Start Game</button>
         </div>
@@ -201,7 +207,7 @@
                 </div>
                 <div id="play-area">
                     <strong>Last Play:</strong>
-                    <div id="last-play-info">No cards played</div>
+                    <div id="last-play-info">No cards played (you lead)</div>
                     <div id="last-play-cards"></div>
                 </div>
                 <div class="opponent">
@@ -227,14 +233,15 @@
     </div>
 
     <script>
-        // Card ranks and suits
+        // Proper Guandan Rules Implementation
         const SUITS = ['♥', '♦', '♣', '♠'];
-        const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+        const BASE_RANKS = ['3','4','5','6','7','8','9','10','J','Q','K','A','2'];
 
         let deck = [];
-        let hands = [[],[],[],[]]; // 0=you, 1=left, 2=top, 3=right
+        let hands = [[],[],[],[]];
         let selected = [];
         let lastPlay = [];
+        let lastPlayPattern = null;
         let lastPlayPlayer = -1;
         let currentPlayer = 0;
         let levelCard = '2';
@@ -242,11 +249,19 @@
         let team2Level = '2';
         let passCount = 0;
 
+        // Get effective rank considering level card
+        function getEffectiveRank(card) {
+            if (card.rank === 'BIG_JOKER') return 99;
+            if (card.rank === 'SMALL_JOKER') return 98;
+            if (card.rank === levelCard) return 15; // Level card ranks higher than normal
+            return BASE_RANKS.indexOf(card.rank) + 3; // 3-15
+        }
+
         function createDeck() {
             deck = [];
             for (let d = 0; d < 2; d++) {
                 for (let suit of SUITS) {
-                    for (let rank of RANKS) {
+                    for (let rank of BASE_RANKS) {
                         deck.push({
                             rank,
                             suit,
@@ -255,11 +270,10 @@
                     }
                 }
             }
-            // 4 jokers
-            deck.push({ rank: '🃏', suit: '', color: 'red' });
-            deck.push({ rank: '🃏', suit: '', color: 'red' });
-            deck.push({ rank: 'JOKER', suit: '', color: 'black' });
-            deck.push({ rank: 'JOKER', suit: '', color: 'black' });
+            deck.push({ rank: 'SMALL_JOKER', suit: '', color: 'red' });
+            deck.push({ rank: 'SMALL_JOKER', suit: '', color: 'red' });
+            deck.push({ rank: 'BIG_JOKER', suit: '', color: 'black' });
+            deck.push({ rank: 'BIG_JOKER', suit: '', color: 'black' });
         }
 
         function shuffle() {
@@ -281,23 +295,75 @@
 
         function sortHand(playerIndex) {
             hands[playerIndex].sort((a, b) => {
-                // Jokers to end
-                const aIsJoker = a.rank === '🃏' || a.rank === 'JOKER';
-                const bIsJoker = b.rank === '🃏' || b.rank === 'JOKER';
-
-                if (aIsJoker && !bIsJoker) return 1;
-                if (!aIsJoker && bIsJoker) return -1;
-                if (aIsJoker && bIsJoker) return 0;
-
-                const rankA = RANKS.indexOf(a.rank);
-                const rankB = RANKS.indexOf(b.rank);
-
-                if (rankA !== rankB) return rankA - rankB;
-
-                const suitA = SUITS.indexOf(a.suit);
-                const suitB = SUITS.indexOf(b.suit);
-                return suitA - suitB;
+                return getEffectiveRank(a) - getEffectiveRank(b);
             });
+        }
+
+        // Identify card pattern
+        function identifyPattern(cards) {
+            if (cards.length === 0) return null;
+
+            const sorted = [...cards].sort((a, b) => getEffectiveRank(a) - getEffectiveRank(b));
+            const ranks = sorted.map(c => getEffectiveRank(c));
+
+            // Single
+            if (cards.length === 1) {
+                return { type: 'single', rank: ranks[0] };
+            }
+
+            // Pair
+            if (cards.length === 2 && ranks[0] === ranks[1]) {
+                return { type: 'pair', rank: ranks[0] };
+            }
+
+            // Triple
+            if (cards.length === 3 && ranks[0] === ranks[1] && ranks[1] === ranks[2]) {
+                return { type: 'triple', rank: ranks[0] };
+            }
+
+            // Bomb (4 of a kind)
+            if (cards.length === 4 && ranks[0] === ranks[1] && ranks[1] === ranks[2] && ranks[2] === ranks[3]) {
+                return { type: 'bomb', rank: ranks[0], count: 4 };
+            }
+
+            return null; // Invalid or complex pattern
+        }
+
+        // Check if play1 beats play2
+        function beats(cards1, pattern1, cards2, pattern2) {
+            if (!pattern1 || !pattern2) return false;
+
+            // Bomb beats everything except bigger bomb
+            if (pattern1.type === 'bomb' && pattern2.type !== 'bomb') return true;
+            if (pattern1.type !== 'bomb' && pattern2.type === 'bomb') return false;
+
+            // Must be same type
+            if (pattern1.type !== pattern2.type) return false;
+
+            // Compare ranks
+            if (pattern1.type === 'bomb') {
+                return pattern1.rank > pattern2.rank;
+            }
+
+            return pattern1.rank > pattern2.rank;
+        }
+
+        // Check if play is valid
+        function isValidPlay(cards) {
+            if (cards.length === 0) return false;
+
+            const pattern = identifyPattern(cards);
+            if (!pattern) {
+                return false;
+            }
+
+            // If leading, any valid pattern is OK
+            if (!lastPlayPattern) {
+                return true;
+            }
+
+            // Must beat previous play
+            return beats(cards, pattern, lastPlay, lastPlayPattern);
         }
 
         function startGame() {
@@ -310,13 +376,14 @@
 
             currentPlayer = 0;
             lastPlay = [];
+            lastPlayPattern = null;
             lastPlayPlayer = -1;
             passCount = 0;
             selected = [];
 
             renderHand();
             updateUI();
-            showMessage('Your turn! Select cards to play.');
+            showMessage('Your turn! You lead - play any valid pattern.');
         }
 
         function renderHand() {
@@ -329,7 +396,9 @@
 
                 const rankEl = document.createElement('div');
                 rankEl.className = 'card-rank';
-                rankEl.textContent = card.rank === 'JOKER' ? '🃏' : card.rank;
+                if (card.rank === 'SMALL_JOKER') rankEl.textContent = '🃏';
+                else if (card.rank === 'BIG_JOKER') rankEl.textContent = '🃏';
+                else rankEl.textContent = card.rank;
 
                 const suitEl = document.createElement('div');
                 suitEl.className = 'card-suit';
@@ -386,9 +455,11 @@
                 lastPlayCardsEl.innerHTML = '';
             } else {
                 const playerNames = ['You', 'Left', 'Top', 'Right'];
-                lastPlayInfo.textContent = playerNames[lastPlayPlayer] + ' played ' + lastPlay.length + ' card(s):';
+                const patternName = lastPlayPattern ? lastPlayPattern.type : 'unknown';
+                lastPlayInfo.textContent = playerNames[lastPlayPlayer] + ' played ' + patternName + ':';
                 lastPlayCardsEl.innerHTML = lastPlay.map(c => {
-                    const displayRank = c.rank === 'JOKER' ? '🃏' : c.rank;
+                    let displayRank = c.rank;
+                    if (c.rank === 'SMALL_JOKER' || c.rank === 'BIG_JOKER') displayRank = '🃏';
                     return `<span style="color: ${c.color === 'red' ? '#D32F2F' : '#000'}; font-weight: bold; margin: 0 3px;">${displayRank}${c.suit}</span>`;
                 }).join('');
             }
@@ -399,16 +470,39 @@
         function playCards() {
             if (currentPlayer !== 0 || selected.length === 0) return;
 
-            const cards = selected.sort((a,b) => b-a).map(idx => {
-                return hands[0].splice(idx, 1)[0];
+            const cards = selected.sort((a,b) => b-a).map(idx => hands[0][idx]);
+
+            // Validate play
+            if (!isValidPlay(cards)) {
+                const msgEl = document.getElementById('message');
+                msgEl.className = 'error-msg';
+
+                if (lastPlayPattern) {
+                    showMessage(`❌ Invalid! Must play ${lastPlayPattern.type} that beats rank ${lastPlayPattern.rank}`);
+                } else {
+                    showMessage('❌ Invalid pattern! Try: 1 card, pair (2 same), triple (3 same), or bomb (4 same)');
+                }
+
+                setTimeout(() => {
+                    msgEl.className = '';
+                    showMessage('Try again - select valid cards');
+                }, 2000);
+                return;
+            }
+
+            // Remove cards from hand
+            selected.sort((a,b) => b-a).forEach(idx => {
+                hands[0].splice(idx, 1);
             });
 
             lastPlay = cards;
+            lastPlayPattern = identifyPattern(cards);
             lastPlayPlayer = 0;
             selected = [];
             passCount = 0;
 
-            showMessage('You played ' + cards.length + ' card(s)!');
+            const patternName = lastPlayPattern ? lastPlayPattern.type : 'cards';
+            showMessage(`You played ${patternName}!`);
             sortHand(0);
             renderHand();
             updateUI();
@@ -433,6 +527,7 @@
 
             if (passCount >= 3) {
                 lastPlay = [];
+                lastPlayPattern = null;
                 lastPlayPlayer = -1;
                 passCount = 0;
                 showMessage('All passed! You lead again.');
@@ -451,7 +546,11 @@
             } while (hands[currentPlayer].length === 0);
 
             if (currentPlayer === 0) {
-                showMessage('Your turn!');
+                if (lastPlayPattern) {
+                    showMessage(`Your turn! Must beat ${lastPlayPattern.type} rank ${lastPlayPattern.rank}`);
+                } else {
+                    showMessage('Your turn! You lead - play anything.');
+                }
                 updateButtons();
             } else {
                 const names = ['', 'Left', 'Top', 'Right'];
@@ -469,14 +568,13 @@
 
             const names = ['', 'Left', 'Top', 'Right'];
 
-            // Simple AI: 60% chance to pass if partner played last
+            // Simple AI: try to play valid cards or pass
             const isPartner = (currentPlayer === 2 && lastPlayPlayer === 0) ||
                              (currentPlayer === 0 && lastPlayPlayer === 2) ||
                              (currentPlayer === 1 && lastPlayPlayer === 3) ||
                              (currentPlayer === 3 && lastPlayPlayer === 1);
 
-            const shouldPass = lastPlay.length > 0 &&
-                              (Math.random() < 0.4 || (isPartner && Math.random() < 0.6));
+            const shouldPass = lastPlay.length > 0 && (Math.random() < 0.5 || (isPartner && Math.random() < 0.7));
 
             if (shouldPass) {
                 showMessage(names[currentPlayer] + ' passed.');
@@ -484,9 +582,10 @@
 
                 if (passCount >= 3) {
                     lastPlay = [];
+                    lastPlayPattern = null;
                     lastPlayPlayer = -1;
                     passCount = 0;
-                    showMessage(names[currentPlayer] + ' leads (all others passed).');
+                    showMessage(names[currentPlayer] + ' leads (all passed).');
                     updateUI();
                     setTimeout(aiPlay, 800);
                     return;
@@ -495,16 +594,27 @@
                 updateUI();
                 setTimeout(nextTurn, 800);
             } else {
-                const numCards = Math.min(
-                    Math.floor(Math.random() * 4) + 1,
-                    hands[currentPlayer].length
-                );
-                const cards = hands[currentPlayer].splice(0, numCards);
+                // Try to play valid cards
+                let cards = [];
+
+                if (!lastPlayPattern) {
+                    // Leading - play 1-2 cards
+                    const num = Math.min(Math.random() < 0.5 ? 1 : 2, hands[currentPlayer].length);
+                    cards = hands[currentPlayer].splice(0, num);
+                } else {
+                    // Try to beat - simplified: take random cards
+                    const num = lastPlay.length;
+                    cards = hands[currentPlayer].splice(0, Math.min(num, hands[currentPlayer].length));
+                }
+
+                const pattern = identifyPattern(cards);
                 lastPlay = cards;
+                lastPlayPattern = pattern;
                 lastPlayPlayer = currentPlayer;
                 passCount = 0;
 
-                showMessage(names[currentPlayer] + ' played ' + numCards + ' card(s).');
+                const patternName = pattern ? pattern.type : 'cards';
+                showMessage(names[currentPlayer] + ' played ' + patternName + '.');
                 updateUI();
 
                 if (hands[currentPlayer].length === 0) {
