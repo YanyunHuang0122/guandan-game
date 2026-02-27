@@ -6,32 +6,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#2E7D32">
-
-    <!-- Force landscape orientation -->
-    <style>
-        @media screen and (orientation: portrait) {
-            body::before {
-                content: "🔄 Please rotate your device to landscape mode";
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background: #1B5E20;
-                color: white;
-                font-size: 24px;
-                text-align: center;
-                z-index: 10000;
-                padding: 20px;
-            }
-            body > * {
-                display: none !important;
-            }
-        }
-    </style>
+    <meta name="screen-orientation" content="landscape">
+    <meta name="x5-orientation" content="landscape">
+    <meta name="format-detection" content="telephone=no">
     <title>掼蛋 Guandan</title>
     <style>
         * {

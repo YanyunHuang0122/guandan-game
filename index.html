@@ -21,31 +21,9 @@
             -webkit-user-select: none;
             user-select: none;
         }
-        /* Ensure scrolling works */
-        body, html {
-            overflow: auto !important;
-            -webkit-overflow-scrolling: touch;
-        }
-        /* Debug info */
-        #debug-info {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(255,0,0,0.8);
-            color: white;
-            padding: 10px;
-            font-size: 12px;
-            z-index: 10000;
-            border-radius: 5px;
-            max-width: 200px;
-            word-wrap: break-word;
-        }
     </style>
 </head>
 <body>
-    <!-- Debug Info -->
-    <div id="debug-info">Loading...</div>
-
     <!-- Main Menu Screen -->
     <div id="main-menu" class="screen">
         <div class="menu-container">
@@ -140,43 +118,13 @@
         <p>Loading game...</p>
     </div>
 
-    <!-- Scripts with error handling -->
-    <script>
-        // Debug helper
-        function updateDebug(msg) {
-            const debug = document.getElementById('debug-info');
-            if (debug) debug.textContent = msg;
-        }
-
-        // Catch all errors
-        window.onerror = function(msg, url, line, col, error) {
-            updateDebug('Error: ' + msg + ' at line ' + line);
-            return false;
-        };
-
-        updateDebug('Scripts loading...');
-    </script>
-
-    <script src="js/models.js" onerror="updateDebug('models.js failed')"></script>
-    <script src="js/rules-engine.js" onerror="updateDebug('rules-engine.js failed')"></script>
-    <script src="js/game-engine.js" onerror="updateDebug('game-engine.js failed')"></script>
-    <script src="js/ai-engine.js" onerror="updateDebug('ai-engine.js failed')"></script>
-    <script src="js/game-controller.js" onerror="updateDebug('game-controller.js failed')"></script>
-    <script src="js/app.js" onerror="updateDebug('app.js failed')"></script>
-
-    <script>
-        // Verify loading
-        setTimeout(function() {
-            if (typeof GameController !== 'undefined') {
-                updateDebug('Ready! ✓');
-                setTimeout(function() {
-                    document.getElementById('debug-info').style.display = 'none';
-                }, 2000);
-            } else {
-                updateDebug('Failed to load game classes');
-            }
-        }, 1000);
-    </script>
+    <!-- Scripts -->
+    <script src="js/models.js"></script>
+    <script src="js/rules-engine.js"></script>
+    <script src="js/game-engine.js"></script>
+    <script src="js/ai-engine.js"></script>
+    <script src="js/game-controller.js"></script>
+    <script src="js/app.js"></script>
 
     <!-- Service Worker Registration -->
     <script>
