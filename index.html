@@ -197,22 +197,25 @@
             </div>
 
             <div class="opponent">
-                <strong>Top (Partner)</strong> - <span id="top-count">27</span> cards
+                <strong>Top (Partner)</strong> - <span id="top-count">27</span> cards<br>
+                <div id="top-action" style="margin-top: 5px; font-size: 12px; min-height: 20px;">-</div>
             </div>
 
             <div class="layout">
                 <div class="opponent">
                     <strong>Left</strong><br>
-                    <span id="left-count">27</span> cards
+                    <span id="left-count">27</span> cards<br>
+                    <div id="left-action" style="margin-top: 5px; font-size: 12px; min-height: 20px;">-</div>
                 </div>
                 <div id="play-area">
-                    <strong>Last Play:</strong>
+                    <strong>Play Area:</strong>
                     <div id="last-play-info">No cards played (you lead)</div>
                     <div id="last-play-cards"></div>
                 </div>
                 <div class="opponent">
                     <strong>Right</strong><br>
-                    <span id="right-count">27</span> cards
+                    <span id="right-count">27</span> cards<br>
+                    <div id="right-action" style="margin-top: 5px; font-size: 12px; min-height: 20px;">-</div>
                 </div>
             </div>
 
@@ -222,6 +225,7 @@
                 <div style="text-align: center; margin-bottom: 8px; font-size: 13px;">
                     <strong>Your Hand (<span id="hand-count">27</span> cards)</strong>
                 </div>
+                <div id="you-action" style="text-align: center; margin-bottom: 5px; font-size: 12px; min-height: 20px;">-</div>
                 <div id="hand-cards" style="text-align: center;"></div>
             </div>
 
@@ -248,6 +252,7 @@
         let team1Level = '2';
         let team2Level = '2';
         let passCount = 0;
+        let playerActions = ['', '', '', '']; // Track each player's last action
 
         // Get effective rank considering level card
         function getEffectiveRank(card) {
@@ -456,6 +461,7 @@
             lastPlayPlayer = -1;
             passCount = 0;
             selected = [];
+            playerActions = ['-', '-', '-', '-'];
 
             renderHand();
             updateUI();
@@ -523,6 +529,12 @@
             document.getElementById('top-count').textContent = hands[2].length;
             document.getElementById('right-count').textContent = hands[3].length;
 
+            // Update player actions
+            document.getElementById('you-action').textContent = playerActions[0] || '-';
+            document.getElementById('left-action').textContent = playerActions[1] || '-';
+            document.getElementById('top-action').textContent = playerActions[2] || '-';
+            document.getElementById('right-action').textContent = playerActions[3] || '-';
+
             const lastPlayCardsEl = document.getElementById('last-play-cards');
             const lastPlayInfo = document.getElementById('last-play-info');
 
@@ -578,6 +590,15 @@
             passCount = 0;
 
             const patternName = lastPlayPattern ? lastPlayPattern.type : 'cards';
+
+            // Record action with cards
+            const cardDisplay = cards.map(c => {
+                let displayRank = c.rank;
+                if (c.rank === 'SMALL_JOKER' || c.rank === 'BIG_JOKER') displayRank = '🃏';
+                return displayRank + c.suit;
+            }).join(' ');
+            playerActions[0] = `Played: ${cardDisplay}`;
+
             showMessage(`You played ${patternName}!`);
             sortHand(0);
             renderHand();
@@ -597,6 +618,7 @@
         function pass() {
             if (currentPlayer !== 0 || lastPlay.length === 0) return;
 
+            playerActions[0] = 'Passed';
             showMessage('You passed.');
             selected = [];
             passCount++;
@@ -606,6 +628,7 @@
                 lastPlayPattern = null;
                 lastPlayPlayer = -1;
                 passCount = 0;
+                playerActions = ['-', '-', '-', '-'];
                 showMessage('All passed! You lead again.');
                 updateUI();
                 return;
@@ -655,6 +678,7 @@
             const shouldTryPass = lastPlay.length > 0 && (isPartner ? Math.random() < 0.7 : Math.random() < 0.3);
 
             if (shouldTryPass) {
+                playerActions[currentPlayer] = 'Passed';
                 showMessage(names[currentPlayer] + ' passed.');
                 passCount++;
 
@@ -663,6 +687,7 @@
                     lastPlayPattern = null;
                     lastPlayPlayer = -1;
                     passCount = 0;
+                    playerActions = ['-', '-', '-', '-'];
                     showMessage(names[currentPlayer] + ' leads (all passed).');
                     updateUI();
                     setTimeout(aiPlay, 800);
@@ -743,6 +768,7 @@
 
             // If no valid play found, pass
             if (!validPlay || !isValidPlay(validPlay)) {
+                playerActions[currentPlayer] = 'Passed';
                 showMessage(names[currentPlayer] + ' passed (no valid play).');
                 passCount++;
 
@@ -751,6 +777,7 @@
                     lastPlayPattern = null;
                     lastPlayPlayer = -1;
                     passCount = 0;
+                    playerActions = ['-', '-', '-', '-'];
                     showMessage(names[currentPlayer] + ' leads (all passed).');
                     updateUI();
                     setTimeout(aiPlay, 800);
@@ -777,6 +804,14 @@
             lastPlayPattern = pattern;
             lastPlayPlayer = currentPlayer;
             passCount = 0;
+
+            // Record action with cards
+            const cardDisplay = validPlay.map(c => {
+                let displayRank = c.rank;
+                if (c.rank === 'SMALL_JOKER' || c.rank === 'BIG_JOKER') displayRank = '🃏';
+                return displayRank + c.suit;
+            }).join(' ');
+            playerActions[currentPlayer] = `Played: ${cardDisplay}`;
 
             const patternName = pattern ? pattern.type : 'cards';
             showMessage(names[currentPlayer] + ' played ' + patternName + '.');
