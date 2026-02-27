@@ -183,7 +183,7 @@
             <div class="info">
                 <h3>Guandan Card Game</h3>
                 <p>4 players • 2 teams • Progress from 2 to A</p>
-                <p>You & Top vs Left & Right</p>
+                <p>You & Top vs Right & Left</p>
                 <p><small>Proper Guandan rules: match pattern & beat rank!</small></p>
             </div>
             <button onclick="startGame()">Start Game</button>
@@ -524,23 +524,23 @@
             document.getElementById('team1-level').textContent = team1Level;
             document.getElementById('team2-level').textContent = team2Level;
             document.getElementById('hand-count').textContent = hands[0].length;
-            document.getElementById('left-count').textContent = hands[1].length;
+            document.getElementById('right-count').textContent = hands[1].length;
             document.getElementById('top-count').textContent = hands[2].length;
-            document.getElementById('right-count').textContent = hands[3].length;
+            document.getElementById('left-count').textContent = hands[3].length;
 
-            // Update player actions
+            // Update player actions (0:You, 1:Right, 2:Top, 3:Left)
             document.getElementById('you-action').textContent = playerActions[0] || '-';
-            document.getElementById('left-action').textContent = playerActions[1] || '-';
+            document.getElementById('right-action').textContent = playerActions[1] || '-';
             document.getElementById('top-action').textContent = playerActions[2] || '-';
-            document.getElementById('right-action').textContent = playerActions[3] || '-';
+            document.getElementById('left-action').textContent = playerActions[3] || '-';
 
             const lastPlayInfo = document.getElementById('last-play-info');
 
             if (lastPlay.length === 0) {
-                const playerNames = ['You', 'Left', 'Top', 'Right'];
+                const playerNames = ['You', 'Right', 'Top', 'Left'];
                 lastPlayInfo.textContent = playerNames[currentPlayer] + ' leads - play any pattern';
             } else {
-                const playerNames = ['You', 'Left', 'Top', 'Right'];
+                const playerNames = ['You', 'Right', 'Top', 'Left'];
                 const patternName = lastPlayPattern ? lastPlayPattern.type : 'unknown';
                 const lengthInfo = lastPlayPattern && lastPlayPattern.length ? ` (${lastPlayPattern.length})` : '';
                 lastPlayInfo.textContent = `Beat: ${patternName}${lengthInfo} rank ${lastPlayPattern.rank}`;
@@ -647,7 +647,7 @@
                 }
                 updateButtons();
             } else {
-                const names = ['', 'Left', 'Top', 'Right'];
+                const names = ['', 'Right', 'Top', 'Left'];
                 showMessage(names[currentPlayer] + "'s turn...");
                 updateButtons();
                 setTimeout(aiPlay, 1000);
@@ -660,9 +660,10 @@
                 return;
             }
 
-            const names = ['', 'Left', 'Top', 'Right'];
+            const names = ['', 'Right', 'Top', 'Left'];
 
-            // Check if partner played last
+            // Check if partner played last (0:You, 1:Right, 2:Top, 3:Left)
+            // Partners: You(0) & Top(2), Right(1) & Left(3)
             const isPartner = (currentPlayer === 2 && lastPlayPlayer === 0) ||
                              (currentPlayer === 0 && lastPlayPlayer === 2) ||
                              (currentPlayer === 1 && lastPlayPlayer === 3) ||
