@@ -650,7 +650,7 @@
                 const names = ['', 'Right', 'Top', 'Left'];
                 showMessage(names[currentPlayer] + "'s turn...");
                 updateButtons();
-                setTimeout(aiPlay, 1000);
+                setTimeout(aiPlay, 500);
             }
         }
 
@@ -685,12 +685,12 @@
                     playerActions = ['-', '-', '-', '-'];
                     showMessage(names[currentPlayer] + ' leads (all passed).');
                     updateUI();
-                    setTimeout(aiPlay, 1500);
+                    setTimeout(aiPlay, 2000);
                     return;
                 }
 
                 updateUI();
-                setTimeout(nextTurn, 1500);
+                setTimeout(nextTurn, 2000);
                 return;
             }
 
@@ -775,12 +775,12 @@
                     playerActions = ['-', '-', '-', '-'];
                     showMessage(names[currentPlayer] + ' leads (all passed).');
                     updateUI();
-                    setTimeout(aiPlay, 1500);
+                    setTimeout(aiPlay, 2000);
                     return;
                 }
 
                 updateUI();
-                setTimeout(nextTurn, 1500);
+                setTimeout(nextTurn, 2000);
                 return;
             }
 
