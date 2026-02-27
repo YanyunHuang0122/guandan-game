@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #2E7D32;
+            color: white;
+            overflow: auto;
+        }
+        .test-box {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 2px solid white;
+        }
+        .error { background: rgba(255,0,0,0.3); }
+        .success { background: rgba(0,255,0,0.3); }
+        button {
+            background: blue;
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        #log {
+            background: black;
+            color: lime;
+            padding: 10px;
+            font-size: 12px;
+            font-family: monospace;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Guandan Debug Test</h1>
+
+    <div class="test-box" id="scroll-test">
+        <h3>Scroll Test</h3>
+        <p>Can you scroll this page? ✋</p>
+    </div>
+
+    <div class="test-box" id="button-test">
+        <h3>Button Test</h3>
+        <button onclick="testButton()">Tap This Button</button>
+        <p id="button-result"></p>
+    </div>
+
+    <div class="test-box" id="js-test">
+        <h3>JavaScript Test</h3>
+        <p id="js-result">Testing...</p>
+    </div>
+
+    <div class="test-box" id="files-test">
+        <h3>File Loading Test</h3>
+        <p id="files-result">Testing file loads...</p>
+    </div>
+
+    <div id="log">
+        <strong>Log:</strong><br>
+    </div>
+
+    <script>
+        function log(msg) {
+            const logEl = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logEl.innerHTML += `[${time}] ${msg}<br>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function testButton() {
+            document.getElementById('button-result').innerHTML = '✅ Button works!';
+            document.getElementById('button-test').className = 'test-box success';
+            log('Button clicked successfully');
+        }
+
+        // Test 1: JavaScript works
+        try {
+            document.getElementById('js-result').innerHTML = '✅ JavaScript is running!';
+            document.getElementById('js-test').className = 'test-box success';
+            log('JavaScript test passed');
+        } catch(e) {
+            document.getElementById('js-result').innerHTML = '❌ Error: ' + e.message;
+            document.getElementById('js-test').className = 'test-box error';
+            log('JavaScript test FAILED: ' + e.message);
+        }
+
+        // Test 2: Load game files
+        const filesToTest = [
+            'js/models.js',
+            'js/rules-engine.js',
+            'js/game-engine.js',
+            'js/ai-engine.js',
+            'js/game-controller.js',
+            'js/app.js'
+        ];
+
+        let filesLoaded = 0;
+        let filesFailed = 0;
+
+        function updateFilesTest() {
+            const total = filesToTest.length;
+            const result = document.getElementById('files-result');
+
+            if (filesLoaded === total) {
+                result.innerHTML = `✅ All ${total} files loaded!`;
+                document.getElementById('files-test').className = 'test-box success';
+            } else if (filesFailed > 0) {
+                result.innerHTML = `❌ ${filesLoaded}/${total} loaded, ${filesFailed} failed`;
+                document.getElementById('files-test').className = 'test-box error';
+            } else {
+                result.innerHTML = `⏳ Loading... ${filesLoaded}/${total}`;
+            }
+        }
+
+        filesToTest.forEach(file => {
+            const script = document.createElement('script');
+            script.src = file;
+
+            script.onload = function() {
+                filesLoaded++;
+                log(`✅ Loaded: ${file}`);
+                updateFilesTest();
+            };
+
+            script.onerror = function() {
+                filesFailed++;
+                log(`❌ Failed to load: ${file}`);
+                updateFilesTest();
+            };
+
+            document.head.appendChild(script);
+        });
+
+        // Catch all errors
+        window.onerror = function(msg, url, line, col, error) {
+            log(`❌ Error: ${msg} at line ${line}`);
+            return false;
+        };
+
+        log('Test page loaded');
+        log('Waiting for file loads...');
+    </script>
+
+    <div style="height: 500px; background: rgba(255,255,255,0.1); margin-top: 20px; padding: 20px; border-radius: 10px;">
+        <h3>Long Content Test</h3>
+        <p>If you can scroll down and see this section, scrolling works! 📜</p>
+        <p>Line 1</p>
+        <p>Line 2</p>
+        <p>Line 3</p>
+        <p>Line 4</p>
+        <p>Line 5</p>
+        <p>Line 6</p>
+        <p>Line 7</p>
+        <p>Line 8</p>
+        <p>Line 9</p>
+        <p>Line 10</p>
+        <p><strong>✅ If you can read this, scrolling works!</strong></p>
+    </div>
+</body>
+</html>
