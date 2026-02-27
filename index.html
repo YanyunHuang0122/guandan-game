@@ -110,28 +110,31 @@
 
         .opponent {
             background: rgba(0,0,0,0.2);
-            padding: 8px;
-            border-radius: 8px;
-            margin: 5px 0;
+            padding: 5px 8px;
+            border-radius: 6px;
+            margin: 3px 0;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         #play-area {
             background: rgba(0,0,0,0.3);
-            padding: 12px;
+            padding: 15px;
             border-radius: 10px;
-            min-height: 60px;
+            min-height: 50px;
             text-align: center;
-            margin: 5px 0;
-            font-size: 13px;
+            margin: 3px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #turn-message {
             font-weight: bold;
             color: #FFD700;
-            margin-bottom: 5px;
             font-size: 14px;
+            line-height: 1.4;
         }
 
         .layout {
@@ -181,30 +184,23 @@
         </div>
 
         <div id="game-area">
-            <div class="info">
-                <strong>Level Card: <span id="level">2</span></strong> |
-                Team 1: <span id="team1-level">2</span> |
-                Team 2: <span id="team2-level">2</span>
-            </div>
-
             <div class="layout">
                 <div class="opponent">
-                    <strong>Left</strong> - <span id="left-count">27</span><br>
-                    <div id="left-action" style="margin-top: 3px; font-size: 11px; min-height: 18px;">-</div>
+                    <strong>Left</strong> <span id="left-count">27</span><br>
+                    <div id="left-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
                 </div>
                 <div>
-                    <div class="opponent" style="margin-bottom: 5px;">
-                        <strong>Top (Partner)</strong> - <span id="top-count">27</span><br>
-                        <div id="top-action" style="margin-top: 3px; font-size: 11px; min-height: 18px;">-</div>
+                    <div class="opponent" style="margin-bottom: 3px;">
+                        <strong>Top</strong> <span id="top-count">27</span><br>
+                        <div id="top-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
                     </div>
                     <div id="play-area">
-                        <div id="turn-message" style="font-weight: bold; color: #FFD700; margin-bottom: 5px;">Your turn!</div>
-                        <div id="last-play-info" style="font-size: 12px;">You lead - play any pattern</div>
+                        <div id="turn-message">Your turn!</div>
                     </div>
                 </div>
                 <div class="opponent">
-                    <strong>Right</strong> - <span id="right-count">27</span><br>
-                    <div id="right-action" style="margin-top: 3px; font-size: 11px; min-height: 18px;">-</div>
+                    <strong>Right</strong> <span id="right-count">27</span><br>
+                    <div id="right-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
                 </div>
             </div>
 
@@ -212,7 +208,7 @@
                 <div style="text-align: center; margin-bottom: 8px; font-size: 13px;">
                     <strong>Your Hand (<span id="hand-count">27</span> cards)</strong>
                 </div>
-                <div id="you-action" style="text-align: center; margin-bottom: 5px; font-size: 12px; min-height: 20px;">-</div>
+                <div id="you-action" style="text-align: center; margin-bottom: 5px; font-size: 11px; min-height: 18px;">-</div>
                 <div id="hand-cards" style="text-align: center;"></div>
             </div>
 
@@ -497,8 +493,8 @@
             renderHand();
             updateUI();
 
-            const playerNames = ['You', 'Right', 'Top', 'Left'];
-            showMessage(playerNames[currentPlayer] + ' leads! Play any valid pattern.');
+            const playerNames = ['You lead', 'Right leads', 'Top leads', 'Left leads'];
+            showMessage(playerNames[currentPlayer] + ' - play any pattern');
 
             if (currentPlayer !== 0) {
                 setTimeout(aiPlay, 1000);
@@ -558,9 +554,6 @@
         }
 
         function updateUI() {
-            document.getElementById('level').textContent = levelCard;
-            document.getElementById('team1-level').textContent = team1Level;
-            document.getElementById('team2-level').textContent = team2Level;
             document.getElementById('hand-count').textContent = hands[0].length;
             document.getElementById('right-count').textContent = hands[1].length;
             document.getElementById('top-count').textContent = hands[2].length;
@@ -571,18 +564,6 @@
             document.getElementById('right-action').textContent = playerActions[1] || '-';
             document.getElementById('top-action').textContent = playerActions[2] || '-';
             document.getElementById('left-action').textContent = playerActions[3] || '-';
-
-            const lastPlayInfo = document.getElementById('last-play-info');
-
-            if (lastPlay.length === 0) {
-                const playerNames = ['You', 'Right', 'Top', 'Left'];
-                lastPlayInfo.textContent = playerNames[currentPlayer] + ' leads - play any pattern';
-            } else {
-                const playerNames = ['You', 'Right', 'Top', 'Left'];
-                const patternName = lastPlayPattern ? lastPlayPattern.type : 'unknown';
-                const lengthInfo = lastPlayPattern && lastPlayPattern.length ? ` (${lastPlayPattern.length})` : '';
-                lastPlayInfo.textContent = `Beat: ${patternName}${lengthInfo} rank ${lastPlayPattern.rank}`;
-            }
 
             updateButtons();
         }
@@ -690,12 +671,17 @@
                     const lengthMsg = lastPlayPattern.length ? ` (${lastPlayPattern.length} cards)` : '';
                     showMessage(`Your turn! Must beat ${lastPlayPattern.type}${lengthMsg} rank ${lastPlayPattern.rank}`);
                 } else {
-                    showMessage('Your turn! You lead - play anything.');
+                    showMessage('Your turn! You lead - play any pattern');
                 }
                 updateButtons();
             } else {
                 const names = ['', 'Right', 'Top', 'Left'];
-                showMessage(names[currentPlayer] + "'s turn...");
+                if (lastPlayPattern) {
+                    const lengthMsg = lastPlayPattern.length ? ` (${lastPlayPattern.length} cards)` : '';
+                    showMessage(`${names[currentPlayer]}'s turn - must beat ${lastPlayPattern.type}${lengthMsg} rank ${lastPlayPattern.rank}`);
+                } else {
+                    showMessage(`${names[currentPlayer]} leads...`);
+                }
                 updateButtons();
                 setTimeout(aiPlay, 500);
             }
