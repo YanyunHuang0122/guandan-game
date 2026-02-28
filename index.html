@@ -701,7 +701,14 @@
                     cardEl.style.alignItems = 'center';
                     cardEl.style.justifyContent = 'center';
                     cardEl.style.padding = '0';
-                    cardEl.textContent = '🃏';
+                    // Different icons for big vs small joker
+                    if (card.rank === 'BIG_JOKER') {
+                        cardEl.textContent = '🃏'; // Big joker
+                        cardEl.style.color = '#000'; // Black
+                    } else {
+                        cardEl.textContent = '🎭'; // Small joker - different icon
+                        cardEl.style.color = '#D32F2F'; // Red
+                    }
                 } else {
                     const rankEl = document.createElement('div');
                     rankEl.className = 'card-rank';
@@ -814,7 +821,6 @@
 
             if (hands[0].length === 0) {
                 finishedPlayers.push(0);
-                showMessage('You finished all cards! Waiting for partner...');
 
                 // Check if partner (player 2) also finished - Team 1 wins
                 if (finishedPlayers.includes(2)) {
@@ -822,6 +828,27 @@
                         alert('🎉 Team 1 (You & Top) wins! Both players finished! 🎉');
                         location.reload();
                     }, 1000);
+                    return;
+                }
+
+                // You finished - partner leads next after all pass
+                showMessage('You finished all cards! Partner will lead next.');
+
+                // Check if you won this trick (all others will pass)
+                if (lastPlayPlayer === 0) {
+                    // You played last, so after 3 passes, partner leads
+                    // Set current player to partner to lead next
+                    passCount = 3; // Force all passed state
+                    currentPlayer = 2; // Partner will lead
+                    lastPlay = [];
+                    lastPlayPattern = null;
+                    lastPlayPlayer = -1;
+                    playerActions = ['-', '-', '-', '-'];
+                    updateUI();
+                    setTimeout(() => {
+                        showMessage('Top (your partner) leads...');
+                        setTimeout(aiPlay, 1000);
+                    }, 2000);
                     return;
                 }
 
@@ -906,10 +933,13 @@
                              (currentPlayer === 1 && lastPlayPlayer === 3) ||
                              (currentPlayer === 3 && lastPlayPlayer === 1);
 
-            // AI strategy: pass if partner played (70% chance) or randomly (30% chance)
-            const shouldTryPass = lastPlay.length > 0 && (isPartner ? Math.random() < 0.7 : Math.random() < 0.3);
+            // AI strategy:
+            // - Always pass if partner played (unless few cards left)
+            // - Try to beat opponent with smallest valid play
+            // - Use bombs strategically (only when necessary or to finish)
+            const shouldTryPass = lastPlay.length > 0 && isPartner && hands[currentPlayer].length > 3;
 
-            if (shouldTryPass) {
+            if (shouldTryPass && Math.random() < 0.8) {
                 playerActions[currentPlayer] = 'Passed';
                 showMessage(names[currentPlayer] + ' passed.');
                 passCount++;
@@ -940,51 +970,75 @@
             let validPlay = null;
 
             if (!lastPlayPattern) {
-                // Leading - play smallest valid pattern
-                // Try single first
-                if (hands[currentPlayer].length > 0) {
+                // Leading - prioritize getting rid of singles or low cards
+                if (hands[currentPlayer].length <= 3) {
+                    // Few cards left - play whatever you can
+                    validPlay = hands[currentPlayer].slice(0, Math.min(2, hands[currentPlayer].length));
+                } else {
+                    // Play smallest single
                     validPlay = [hands[currentPlayer][0]];
                 }
             } else {
-                // Try to beat previous play
+                // Try to beat previous play with smallest possible cards
                 const targetType = lastPlayPattern.type;
                 const targetRank = lastPlayPattern.rank;
-                const targetLength = lastPlayPattern.length || 1;
 
-                // Try to find cards that beat the previous play
+                // Find all valid plays, then choose the smallest one
+                const possiblePlays = [];
+
                 if (targetType === 'single') {
-                    // Find single card with higher rank
                     for (let card of hands[currentPlayer]) {
                         if (getEffectiveRank(card) > targetRank) {
-                            validPlay = [card];
-                            break;
+                            possiblePlays.push([card]);
                         }
                     }
                 } else if (targetType === 'pair') {
-                    // Find pair with higher rank
                     for (let i = 0; i < hands[currentPlayer].length - 1; i++) {
                         const r1 = getEffectiveRank(hands[currentPlayer][i]);
                         const r2 = getEffectiveRank(hands[currentPlayer][i+1]);
                         if (r1 === r2 && r1 > targetRank) {
-                            validPlay = [hands[currentPlayer][i], hands[currentPlayer][i+1]];
-                            break;
+                            possiblePlays.push([hands[currentPlayer][i], hands[currentPlayer][i+1]]);
+                            break; // Take first (smallest) valid pair
                         }
                     }
                 } else if (targetType === 'triple') {
-                    // Find triple with higher rank
                     for (let i = 0; i < hands[currentPlayer].length - 2; i++) {
                         const r1 = getEffectiveRank(hands[currentPlayer][i]);
                         const r2 = getEffectiveRank(hands[currentPlayer][i+1]);
                         const r3 = getEffectiveRank(hands[currentPlayer][i+2]);
                         if (r1 === r2 && r2 === r3 && r1 > targetRank) {
-                            validPlay = [hands[currentPlayer][i], hands[currentPlayer][i+1], hands[currentPlayer][i+2]];
+                            possiblePlays.push([hands[currentPlayer][i], hands[currentPlayer][i+1], hands[currentPlayer][i+2]]);
                             break;
+                        }
+                    }
+                } else if (targetType === 'bomb') {
+                    // Only beat bomb with bigger bomb if desperate
+                    if (hands[currentPlayer].length <= 5) {
+                        for (let i = 0; i < hands[currentPlayer].length - 3; i++) {
+                            const r1 = getEffectiveRank(hands[currentPlayer][i]);
+                            let bombSize = 1;
+                            for (let j = i + 1; j < hands[currentPlayer].length; j++) {
+                                if (getEffectiveRank(hands[currentPlayer][j]) === r1) {
+                                    bombSize++;
+                                } else {
+                                    break;
+                                }
+                            }
+                            if (bombSize > lastPlayPattern.count || (bombSize === lastPlayPattern.count && r1 > targetRank)) {
+                                possiblePlays.push(hands[currentPlayer].slice(i, i + bombSize));
+                                break;
+                            }
                         }
                     }
                 }
 
-                // Try bomb if no valid play found
-                if (!validPlay) {
+                // Choose smallest valid play
+                if (possiblePlays.length > 0) {
+                    validPlay = possiblePlays[0];
+                }
+
+                // Try bomb if desperate (very few cards left and no other option)
+                if (!validPlay && hands[currentPlayer].length <= 6 && !isPartner) {
                     for (let i = 0; i < hands[currentPlayer].length - 3; i++) {
                         const r1 = getEffectiveRank(hands[currentPlayer][i]);
                         let bombSize = 1;
@@ -996,7 +1050,8 @@
                             }
                         }
                         if (bombSize >= 4) {
-                            validPlay = hands[currentPlayer].slice(i, i + bombSize);
+                            possiblePlays.push(hands[currentPlayer].slice(i, i + bombSize));
+                            validPlay = possiblePlays[0];
                             break;
                         }
                     }
