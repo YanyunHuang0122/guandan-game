@@ -382,8 +382,8 @@
                 }
             }
 
-            // Check for Flush Straight Bomb FIRST (5+ consecutive same suit = strongest bomb)
-            if (cards.length >= 5) {
+            // Check for Flush Straight Bomb FIRST (exactly 5 consecutive same suit = strongest bomb)
+            if (cards.length === 5) {
                 const suits = sorted.map(c => c.suit);
                 const allSameSuit = suits.every(s => s === suits[0]);
 
@@ -396,7 +396,7 @@
                         }
                     }
                     if (isConsecutive && ranks[ranks.length-1] < 15) { // Can't include level card
-                        return { type: 'flush_straight_bomb', rank: ranks[ranks.length-1], length: cards.length };
+                        return { type: 'flush_straight_bomb', rank: ranks[ranks.length-1], length: 5 };
                     }
                 }
             }
@@ -413,8 +413,8 @@
                 }
             }
 
-            // Flush Straight (Shunzi) - 5+ consecutive cards of same suit (non-bomb, for beating regular patterns)
-            if (cards.length >= 5) {
+            // Flush Straight (Shunzi) - exactly 5 consecutive cards of same suit (non-bomb, for beating regular patterns)
+            if (cards.length === 5) {
                 const suits = sorted.map(c => c.suit);
                 const allSameSuit = suits.every(s => s === suits[0]);
 
@@ -427,7 +427,7 @@
                         }
                     }
                     if (isConsecutive && ranks[ranks.length-1] < 15) { // Can't include level card
-                        return { type: 'flush_straight', rank: ranks[ranks.length-1], length: cards.length };
+                        return { type: 'flush_straight', rank: ranks[ranks.length-1], length: 5 };
                     }
                 }
             }
@@ -505,11 +505,8 @@
             if (pattern1.type === 'flush_straight_bomb' && pattern2.type !== 'flush_straight_bomb') return true;
             if (pattern1.type !== 'flush_straight_bomb' && pattern2.type === 'flush_straight_bomb') return false;
 
-            // Both flush straight bombs - compare length first, then rank
+            // Both flush straight bombs - compare by rank (both always 5 cards)
             if (pattern1.type === 'flush_straight_bomb' && pattern2.type === 'flush_straight_bomb') {
-                if (pattern1.length !== pattern2.length) {
-                    return pattern1.length > pattern2.length;
-                }
                 return pattern1.rank > pattern2.rank;
             }
 
@@ -529,11 +526,8 @@
             if (pattern1.type === 'flush_straight' && pattern2.type !== 'bomb' && pattern2.type !== 'flush_straight_bomb' && pattern2.type !== 'flush_straight') return true;
             if (pattern1.type !== 'flush_straight' && pattern1.type !== 'bomb' && pattern1.type !== 'flush_straight_bomb' && pattern2.type === 'flush_straight') return false;
 
-            // Both flush straights - compare length first, then rank
+            // Both flush straights - compare by rank (both always 5 cards)
             if (pattern1.type === 'flush_straight' && pattern2.type === 'flush_straight') {
-                if (pattern1.length !== pattern2.length) {
-                    return pattern1.length > pattern2.length;
-                }
                 return pattern1.rank > pattern2.rank;
             }
 
@@ -684,7 +678,7 @@
                 if (lastPlayPattern) {
                     showMessage(`❌ Invalid! Must play ${lastPlayPattern.type} (length ${lastPlayPattern.length || 1}) that beats rank ${lastPlayPattern.rank}`);
                 } else {
-                    showMessage('❌ Invalid! Valid: single, pair, triple, full house (3+2), bomb (4+ same), straight (exactly 5), flush straight bomb (5+ same suit)');
+                    showMessage('❌ Invalid! Valid: single, pair, triple, full house (3+2), bomb (4+), straight/flush (exactly 5), pair/triple straights');
                 }
 
                 setTimeout(() => {
