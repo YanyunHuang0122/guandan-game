@@ -385,6 +385,42 @@
             // Check for Flush Straight Bomb FIRST (exactly 5 consecutive same suit = strongest bomb)
             if (cards.length === 5) {
                 const suits = sorted.map(c => c.suit);
+
+                // Count wild cards
+                const wildCards = sorted.filter(c => isHeartLevelCard(c));
+                const nonWildCards = sorted.filter(c => !isHeartLevelCard(c));
+
+                if (wildCards.length > 0 && nonWildCards.length === 4) {
+                    // Check if 4 non-wild cards are same suit and consecutive with one gap
+                    const nonWildSuits = nonWildCards.map(c => c.suit);
+                    const allSameSuit = nonWildSuits.every(s => s === nonWildSuits[0]);
+
+                    if (allSameSuit) {
+                        const nonWildRanks = nonWildCards.map(c => getEffectiveRank(c));
+                        // Check if they form 4 consecutive with one gap
+                        let hasOneGap = false;
+                        let expectedSequence = [];
+
+                        // Try to find if there's exactly one missing card in a 5-card sequence
+                        for (let start = nonWildRanks[0]; start <= nonWildRanks[3] - 3; start++) {
+                            expectedSequence = [start, start+1, start+2, start+3, start+4];
+                            let matches = 0;
+                            for (let r of nonWildRanks) {
+                                if (expectedSequence.includes(r)) matches++;
+                            }
+                            if (matches === 4) {
+                                hasOneGap = true;
+                                break;
+                            }
+                        }
+
+                        if (hasOneGap && expectedSequence[4] < 15) {
+                            return { type: 'flush_straight_bomb', rank: expectedSequence[4], length: 5 };
+                        }
+                    }
+                }
+
+                // Check for regular flush straight bomb (no wilds)
                 const allSameSuit = suits.every(s => s === suits[0]);
 
                 if (allSameSuit) {
@@ -416,6 +452,40 @@
             // Flush Straight (Shunzi) - exactly 5 consecutive cards of same suit (non-bomb, for beating regular patterns)
             if (cards.length === 5) {
                 const suits = sorted.map(c => c.suit);
+
+                // Count wild cards
+                const wildCards = sorted.filter(c => isHeartLevelCard(c));
+                const nonWildCards = sorted.filter(c => !isHeartLevelCard(c));
+
+                if (wildCards.length > 0 && nonWildCards.length === 4) {
+                    // Check if 4 non-wild cards are same suit and consecutive with one gap
+                    const nonWildSuits = nonWildCards.map(c => c.suit);
+                    const allSameSuit = nonWildSuits.every(s => s === nonWildSuits[0]);
+
+                    if (allSameSuit) {
+                        const nonWildRanks = nonWildCards.map(c => getEffectiveRank(c));
+                        let hasOneGap = false;
+                        let expectedSequence = [];
+
+                        for (let start = nonWildRanks[0]; start <= nonWildRanks[3] - 3; start++) {
+                            expectedSequence = [start, start+1, start+2, start+3, start+4];
+                            let matches = 0;
+                            for (let r of nonWildRanks) {
+                                if (expectedSequence.includes(r)) matches++;
+                            }
+                            if (matches === 4) {
+                                hasOneGap = true;
+                                break;
+                            }
+                        }
+
+                        if (hasOneGap && expectedSequence[4] < 15) {
+                            return { type: 'flush_straight', rank: expectedSequence[4], length: 5 };
+                        }
+                    }
+                }
+
+                // Check for regular flush straight (no wilds)
                 const allSameSuit = suits.every(s => s === suits[0]);
 
                 if (allSameSuit) {
@@ -432,8 +502,36 @@
                 }
             }
 
-            // Straight (exactly 5 consecutive singles)
+            // Straight (exactly 5 consecutive singles with possible wild card)
             if (cards.length === 5) {
+                // Count wild cards
+                const wildCards = sorted.filter(c => isHeartLevelCard(c));
+                const nonWildCards = sorted.filter(c => !isHeartLevelCard(c));
+
+                if (wildCards.length > 0 && nonWildCards.length === 4) {
+                    // Check if 4 non-wild cards are consecutive with one gap
+                    const nonWildRanks = nonWildCards.map(c => getEffectiveRank(c));
+                    let hasOneGap = false;
+                    let expectedSequence = [];
+
+                    for (let start = nonWildRanks[0]; start <= nonWildRanks[3] - 3; start++) {
+                        expectedSequence = [start, start+1, start+2, start+3, start+4];
+                        let matches = 0;
+                        for (let r of nonWildRanks) {
+                            if (expectedSequence.includes(r)) matches++;
+                        }
+                        if (matches === 4) {
+                            hasOneGap = true;
+                            break;
+                        }
+                    }
+
+                    if (hasOneGap && expectedSequence[4] < 15) {
+                        return { type: 'straight', rank: expectedSequence[4], length: 5 };
+                    }
+                }
+
+                // Check for regular straight (no wilds)
                 let isConsecutive = true;
                 for (let i = 1; i < cards.length; i++) {
                     if (ranks[i] !== ranks[i-1] + 1) {
