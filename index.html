@@ -256,6 +256,15 @@
             return card.rank === levelCard && card.suit === '♥';
         }
 
+        // Get next level card
+        function getNextLevel(currentLevel) {
+            const idx = BASE_RANKS.indexOf(currentLevel);
+            if (idx >= 0 && idx < BASE_RANKS.length - 1) {
+                return BASE_RANKS[idx + 1];
+            }
+            return 'A'; // Max level
+        }
+
         function createDeck() {
             deck = [];
             for (let d = 0; d < 2; d++) {
@@ -825,7 +834,11 @@
                 // Check if partner (player 2) also finished - Team 1 wins
                 if (finishedPlayers.includes(2)) {
                     setTimeout(() => {
-                        alert('🎉 Team 1 (You & Top) wins! Both players finished! 🎉');
+                        // Increase team 1 level
+                        const nextLevel = getNextLevel(team1Level);
+                        alert(`🎉 Team 1 (You & Top) wins! Both players finished! 🎉\n\nLevel up: ${team1Level} → ${nextLevel}`);
+                        // In a real game, you'd save progress and start next round
+                        // For now, just reload
                         location.reload();
                     }, 1000);
                     return;
@@ -924,6 +937,9 @@
                 return;
             }
 
+            // Make sure AI hand is sorted
+            sortHand(currentPlayer);
+
             const names = ['', 'Right', 'Top', 'Left'];
 
             // Check if partner played last (0:You, 1:Right, 2:Top, 3:Left)
@@ -988,13 +1004,23 @@
 
                 // Priority 2: Look for straights (5 cards)
                 if (!validPlay && hand.length >= 5) {
+                    // Try different positions for straights
                     for (let i = 0; i <= hand.length - 5; i++) {
-                        const testCards = hand.slice(i, i + 5);
-                        const pattern = identifyPattern(testCards);
-                        if (pattern && (pattern.type === 'straight' || pattern.type === 'flush_straight' || pattern.type === 'flush_straight_bomb')) {
-                            validPlay = testCards;
-                            break;
+                        for (let j = i + 5; j <= hand.length; j++) {
+                            // Try every combination of 5 consecutive cards in hand
+                            const testCards = [];
+                            for (let k = i; k < Math.min(i + 5, j); k++) {
+                                if (testCards.length < 5) testCards.push(hand[k]);
+                            }
+                            if (testCards.length === 5) {
+                                const pattern = identifyPattern(testCards);
+                                if (pattern && (pattern.type === 'straight' || pattern.type === 'flush_straight' || pattern.type === 'flush_straight_bomb')) {
+                                    validPlay = testCards;
+                                    break;
+                                }
+                            }
                         }
+                        if (validPlay) break;
                     }
                 }
 
@@ -1174,7 +1200,8 @@
             // Record action with cards
             const cardDisplay = validPlay.map(c => {
                 let displayRank = c.rank;
-                if (c.rank === 'SMALL_JOKER' || c.rank === 'BIG_JOKER') displayRank = '🃏';
+                if (c.rank === 'SMALL_JOKER') displayRank = '🎭';
+                else if (c.rank === 'BIG_JOKER') displayRank = '🃏';
                 return displayRank + c.suit;
             }).join(' ');
             playerActions[currentPlayer] = `Played: ${cardDisplay}`;
@@ -1190,22 +1217,25 @@
                 // Check team wins: Team 1 (You=0, Top=2), Team 2 (Right=1, Left=3)
                 if (currentPlayer === 1 && finishedPlayers.includes(3)) {
                     // Team 2 wins
+                    const nextLevel = getNextLevel(team2Level);
                     setTimeout(() => {
-                        alert('Team 2 (Right & Left) wins! Both players finished!');
+                        alert(`Team 2 (Right & Left) wins! Both players finished!\n\nLevel up: ${team2Level} → ${nextLevel}`);
                         location.reload();
                     }, 2000);
                     return;
                 } else if (currentPlayer === 2 && finishedPlayers.includes(0)) {
                     // Team 1 wins
+                    const nextLevel = getNextLevel(team1Level);
                     setTimeout(() => {
-                        alert('🎉 Team 1 (You & Top) wins! Both players finished! 🎉');
+                        alert(`🎉 Team 1 (You & Top) wins! Both players finished! 🎉\n\nLevel up: ${team1Level} → ${nextLevel}`);
                         location.reload();
                     }, 2000);
                     return;
                 } else if (currentPlayer === 3 && finishedPlayers.includes(1)) {
                     // Team 2 wins
+                    const nextLevel = getNextLevel(team2Level);
                     setTimeout(() => {
-                        alert('Team 2 (Right & Left) wins! Both players finished!');
+                        alert(`Team 2 (Right & Left) wins! Both players finished!\n\nLevel up: ${team2Level} → ${nextLevel}`);
                         location.reload();
                     }, 2000);
                     return;
