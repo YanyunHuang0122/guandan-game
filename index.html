@@ -432,8 +432,8 @@
                 }
             }
 
-            // Straight (5+ consecutive singles)
-            if (cards.length >= 5) {
+            // Straight (exactly 5 consecutive singles)
+            if (cards.length === 5) {
                 let isConsecutive = true;
                 for (let i = 1; i < cards.length; i++) {
                     if (ranks[i] !== ranks[i-1] + 1) {
@@ -442,7 +442,7 @@
                     }
                 }
                 if (isConsecutive && ranks[ranks.length-1] < 15) { // Can't include level card in straight
-                    return { type: 'straight', rank: ranks[ranks.length-1], length: cards.length };
+                    return { type: 'straight', rank: ranks[ranks.length-1], length: 5 };
                 }
             }
 
@@ -537,9 +537,9 @@
                 return pattern1.rank > pattern2.rank;
             }
 
-            // Must be same type and length for straights
+            // Must be same type and length for pair/triple straights
             if (pattern1.type !== pattern2.type) return false;
-            if (pattern1.type === 'straight' || pattern1.type === 'pair_straight' || pattern1.type === 'triple_straight') {
+            if (pattern1.type === 'pair_straight' || pattern1.type === 'triple_straight') {
                 if (pattern1.length !== pattern2.length) return false;
             }
 
@@ -684,7 +684,7 @@
                 if (lastPlayPattern) {
                     showMessage(`❌ Invalid! Must play ${lastPlayPattern.type} (length ${lastPlayPattern.length || 1}) that beats rank ${lastPlayPattern.rank}`);
                 } else {
-                    showMessage('❌ Invalid! Valid: single, pair, triple, full house (3+2), bomb (4+ same), straight flush bomb (5+ consecutive same suit), straights');
+                    showMessage('❌ Invalid! Valid: single, pair, triple, full house (3+2), bomb (4+ same), straight (exactly 5), flush straight bomb (5+ same suit)');
                 }
 
                 setTimeout(() => {
