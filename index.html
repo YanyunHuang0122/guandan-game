@@ -320,6 +320,25 @@
                 return { type: 'triple', rank: ranks[0], length: 1 };
             }
 
+            // Check for Flush Straight Bomb FIRST (5+ consecutive same suit = strongest bomb)
+            if (cards.length >= 5) {
+                const suits = sorted.map(c => c.suit);
+                const allSameSuit = suits.every(s => s === suits[0]);
+
+                if (allSameSuit) {
+                    let isConsecutive = true;
+                    for (let i = 1; i < cards.length; i++) {
+                        if (ranks[i] !== ranks[i-1] + 1) {
+                            isConsecutive = false;
+                            break;
+                        }
+                    }
+                    if (isConsecutive && ranks[ranks.length-1] < 15) { // Can't include level card
+                        return { type: 'flush_straight_bomb', rank: ranks[ranks.length-1], length: cards.length };
+                    }
+                }
+            }
+
             // Bomb (4+ of a kind)
             if (cards.length >= 4) {
                 let bombCount = 1;
@@ -344,7 +363,7 @@
                 }
             }
 
-            // Flush Straight (Shunzi) - 5+ consecutive cards of same suit
+            // Flush Straight (Shunzi) - 5+ consecutive cards of same suit (non-bomb, for beating regular patterns)
             if (cards.length >= 5) {
                 const suits = sorted.map(c => c.suit);
                 const allSameSuit = suits.every(s => s === suits[0]);
@@ -432,13 +451,21 @@
         function beats(cards1, pattern1, cards2, pattern2) {
             if (!pattern1 || !pattern2) return false;
 
-            // Bomb beats everything except bigger bomb
-            if (pattern1.type === 'bomb' && pattern2.type !== 'bomb') return true;
-            if (pattern1.type !== 'bomb' && pattern2.type === 'bomb') return false;
+            // Flush straight bomb beats everything except bigger flush straight bomb
+            if (pattern1.type === 'flush_straight_bomb' && pattern2.type !== 'flush_straight_bomb') return true;
+            if (pattern1.type !== 'flush_straight_bomb' && pattern2.type === 'flush_straight_bomb') return false;
 
-            // Flush straight beats everything except bomb and bigger flush straight
-            if (pattern1.type === 'flush_straight' && pattern2.type !== 'bomb' && pattern2.type !== 'flush_straight') return true;
-            if (pattern1.type !== 'flush_straight' && pattern1.type !== 'bomb' && pattern2.type === 'flush_straight') return false;
+            // Both flush straight bombs - compare length first, then rank
+            if (pattern1.type === 'flush_straight_bomb' && pattern2.type === 'flush_straight_bomb') {
+                if (pattern1.length !== pattern2.length) {
+                    return pattern1.length > pattern2.length;
+                }
+                return pattern1.rank > pattern2.rank;
+            }
+
+            // Regular bomb beats everything except flush straight bomb
+            if (pattern1.type === 'bomb' && pattern2.type !== 'bomb' && pattern2.type !== 'flush_straight_bomb') return true;
+            if (pattern1.type !== 'bomb' && pattern2.type === 'bomb') return false;
 
             // Both bombs - compare count first, then rank
             if (pattern1.type === 'bomb' && pattern2.type === 'bomb') {
@@ -447,6 +474,10 @@
                 }
                 return pattern1.rank > pattern2.rank;
             }
+
+            // Flush straight beats everything except bombs
+            if (pattern1.type === 'flush_straight' && pattern2.type !== 'bomb' && pattern2.type !== 'flush_straight_bomb' && pattern2.type !== 'flush_straight') return true;
+            if (pattern1.type !== 'flush_straight' && pattern1.type !== 'bomb' && pattern1.type !== 'flush_straight_bomb' && pattern2.type === 'flush_straight') return false;
 
             // Both flush straights - compare length first, then rank
             if (pattern1.type === 'flush_straight' && pattern2.type === 'flush_straight') {
@@ -603,7 +634,7 @@
                 if (lastPlayPattern) {
                     showMessage(`❌ Invalid! Must play ${lastPlayPattern.type} (length ${lastPlayPattern.length || 1}) that beats rank ${lastPlayPattern.rank}`);
                 } else {
-                    showMessage('❌ Invalid! Valid: single, pair, triple, full house (3+2), bomb (4+), straight (5+), flush straight (5+ same suit), pair/triple straights');
+                    showMessage('❌ Invalid! Valid: single, pair, triple, full house (3+2), bomb (4+ same), straight flush bomb (5+ consecutive same suit), straights');
                 }
 
                 setTimeout(() => {
