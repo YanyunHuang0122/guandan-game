@@ -67,45 +67,46 @@
 
         .card {
             display: inline-block;
-            width: 45px;
-            height: 65px;
+            width: 32px;
+            height: 48px;
             background: white;
-            border-radius: 5px;
-            margin: 2px;
+            border-radius: 4px;
+            margin: 1px;
             text-align: center;
-            padding-top: 8px;
-            font-size: 18px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            padding-top: 4px;
+            font-size: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
             transition: transform 0.2s;
             vertical-align: bottom;
         }
 
         .card.selected {
-            transform: translateY(-15px);
-            border: 3px solid #1976D2;
-            box-shadow: 0 4px 8px rgba(25, 118, 210, 0.5);
+            transform: translateY(-12px);
+            border: 2px solid #1976D2;
+            box-shadow: 0 3px 6px rgba(25, 118, 210, 0.5);
         }
 
         .card.red { color: #D32F2F; }
         .card.black { color: #000; }
 
         .card-rank {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
+            line-height: 1;
         }
 
         .card-suit {
-            font-size: 18px;
+            font-size: 14px;
+            line-height: 1;
         }
 
         #hand {
             background: rgba(0,0,0,0.3);
-            padding: 10px;
+            padding: 8px;
             border-radius: 10px;
             margin: 10px 0;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
+            white-space: normal;
+            text-align: center;
         }
 
         .opponent {
@@ -184,31 +185,30 @@
         </div>
 
         <div id="game-area">
-            <div class="layout">
-                <div class="opponent">
-                    <strong>Left</strong> <span id="left-count">27</span><br>
+            <div class="opponent" style="width: 100%; margin-bottom: 5px;">
+                <strong>Top</strong> <span id="top-count">27</span>
+                <div id="top-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
+            </div>
+
+            <div style="display: flex; gap: 5px; align-items: stretch;">
+                <div class="opponent" style="flex: 1;">
+                    <strong>Left</strong><br><span id="left-count">27</span>
                     <div id="left-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
                 </div>
-                <div>
-                    <div class="opponent" style="margin-bottom: 3px;">
-                        <strong>Top</strong> <span id="top-count">27</span><br>
-                        <div id="top-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
-                    </div>
-                    <div id="play-area">
-                        <div id="turn-message">Your turn!</div>
-                    </div>
+                <div id="play-area" style="flex: 8;">
+                    <div id="turn-message">Your turn!</div>
                 </div>
-                <div class="opponent">
-                    <strong>Right</strong> <span id="right-count">27</span><br>
+                <div class="opponent" style="flex: 1;">
+                    <strong>Right</strong><br><span id="right-count">27</span>
                     <div id="right-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
                 </div>
             </div>
 
-            <div id="hand">
-                <div style="text-align: center; margin-bottom: 8px; font-size: 13px;">
-                    <strong>Your Hand (<span id="hand-count">27</span> cards)</strong>
+            <div id="hand" style="width: 100%; margin-top: 5px;">
+                <div style="text-align: center; margin-bottom: 5px; font-size: 13px;">
+                    <strong>You (<span id="hand-count">27</span> cards)</strong>
                 </div>
-                <div id="you-action" style="text-align: center; margin-bottom: 5px; font-size: 11px; min-height: 18px;">-</div>
+                <div id="you-action" style="text-align: center; margin-bottom: 3px; font-size: 11px; min-height: 18px;">-</div>
                 <div id="hand-cards" style="text-align: center;"></div>
             </div>
 
@@ -509,18 +509,26 @@
                 const cardEl = document.createElement('div');
                 cardEl.className = 'card ' + card.color;
 
-                const rankEl = document.createElement('div');
-                rankEl.className = 'card-rank';
-                if (card.rank === 'SMALL_JOKER') rankEl.textContent = '🃏';
-                else if (card.rank === 'BIG_JOKER') rankEl.textContent = '🃏';
-                else rankEl.textContent = card.rank;
+                if (card.rank === 'SMALL_JOKER' || card.rank === 'BIG_JOKER') {
+                    // Joker card - fill entire card with emoji
+                    cardEl.style.fontSize = '32px';
+                    cardEl.style.display = 'inline-flex';
+                    cardEl.style.alignItems = 'center';
+                    cardEl.style.justifyContent = 'center';
+                    cardEl.style.padding = '0';
+                    cardEl.textContent = '🃏';
+                } else {
+                    const rankEl = document.createElement('div');
+                    rankEl.className = 'card-rank';
+                    rankEl.textContent = card.rank;
 
-                const suitEl = document.createElement('div');
-                suitEl.className = 'card-suit';
-                suitEl.textContent = card.suit;
+                    const suitEl = document.createElement('div');
+                    suitEl.className = 'card-suit';
+                    suitEl.textContent = card.suit;
 
-                cardEl.appendChild(rankEl);
-                cardEl.appendChild(suitEl);
+                    cardEl.appendChild(rankEl);
+                    cardEl.appendChild(suitEl);
+                }
 
                 cardEl.onclick = () => toggleCard(idx);
 
