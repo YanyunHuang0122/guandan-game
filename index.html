@@ -305,19 +305,81 @@
             const sorted = [...cards].sort((a, b) => getEffectiveRank(a) - getEffectiveRank(b));
             const ranks = sorted.map(c => getEffectiveRank(c));
 
+            // Count heart level cards (wild cards)
+            const heartLevelCards = sorted.filter(c => isHeartLevelCard(c));
+            const wildCount = heartLevelCards.length;
+
             // Single
             if (cards.length === 1) {
                 return { type: 'single', rank: ranks[0], length: 1 };
             }
 
-            // Pair
-            if (cards.length === 2 && ranks[0] === ranks[1]) {
-                return { type: 'pair', rank: ranks[0], length: 1 };
+            // Pair (with possible wild card)
+            if (cards.length === 2) {
+                if (ranks[0] === ranks[1]) {
+                    return { type: 'pair', rank: ranks[0], length: 1 };
+                }
+                // One wild card can make a pair
+                if (wildCount === 1) {
+                    const nonWildRank = sorted.find(c => !isHeartLevelCard(c));
+                    return { type: 'pair', rank: getEffectiveRank(nonWildRank), length: 1 };
+                }
             }
 
-            // Triple
-            if (cards.length === 3 && ranks[0] === ranks[1] && ranks[1] === ranks[2]) {
-                return { type: 'triple', rank: ranks[0], length: 1 };
+            // Triple (with possible wild cards)
+            if (cards.length === 3) {
+                if (ranks[0] === ranks[1] && ranks[1] === ranks[2]) {
+                    return { type: 'triple', rank: ranks[0], length: 1 };
+                }
+                // Count matching ranks (excluding wilds)
+                const nonWilds = sorted.filter(c => !isHeartLevelCard(c));
+                if (nonWilds.length >= 1) {
+                    const targetRank = getEffectiveRank(nonWilds[0]);
+                    const matchCount = nonWilds.filter(c => getEffectiveRank(c) === targetRank).length;
+                    if (matchCount + wildCount >= 3) {
+                        return { type: 'triple', rank: targetRank, length: 1 };
+                    }
+                }
+            }
+
+            // Bomb (4+ of a kind with possible wild cards)
+            if (cards.length >= 4) {
+                // Try to find a bomb with wild cards
+                const nonWilds = sorted.filter(c => !isHeartLevelCard(c));
+                if (nonWilds.length >= 1) {
+                    // Group non-wild cards by rank
+                    const rankCounts = {};
+                    nonWilds.forEach(c => {
+                        const r = getEffectiveRank(c);
+                        rankCounts[r] = (rankCounts[r] || 0) + 1;
+                    });
+
+                    // Find the rank with most cards
+                    let maxRank = null;
+                    let maxCount = 0;
+                    for (let r in rankCounts) {
+                        if (rankCounts[r] > maxCount) {
+                            maxCount = rankCounts[r];
+                            maxRank = parseInt(r);
+                        }
+                    }
+
+                    // Check if we can make a bomb with wild cards
+                    const totalBombCount = maxCount + wildCount;
+                    if (totalBombCount >= 4 && totalBombCount === cards.length) {
+                        return { type: 'bomb', rank: maxRank, count: totalBombCount };
+                    }
+                }
+
+                // Check for regular bomb without wilds
+                let bombCount = 1;
+                for (let i = 1; i < cards.length; i++) {
+                    if (ranks[i] === ranks[0]) bombCount++;
+                    else break;
+                }
+                if (bombCount >= 4 && bombCount === cards.length) {
+                    return { type: 'bomb', rank: ranks[0], count: bombCount };
+                }
             }
 
             // Check for Flush Straight Bomb FIRST (5+ consecutive same suit = strongest bomb)
@@ -336,18 +398,6 @@
                     if (isConsecutive && ranks[ranks.length-1] < 15) { // Can't include level card
                         return { type: 'flush_straight_bomb', rank: ranks[ranks.length-1], length: cards.length };
                     }
-                }
-            }
-
-            // Bomb (4+ of a kind)
-            if (cards.length >= 4) {
-                let bombCount = 1;
-                for (let i = 1; i < cards.length; i++) {
-                    if (ranks[i] === ranks[0]) bombCount++;
-                    else break;
-                }
-                if (bombCount >= 4 && bombCount === cards.length) {
-                    return { type: 'bomb', rank: ranks[0], count: bombCount };
                 }
             }
 
