@@ -185,6 +185,10 @@
         </div>
 
         <div id="game-area">
+            <div style="background: rgba(0,0,0,0.2); padding: 5px; border-radius: 6px; text-align: center; font-size: 12px; margin-bottom: 5px;">
+                <strong>Level Card: <span id="level">2</span></strong>
+            </div>
+
             <div class="opponent" style="width: 100%; margin-bottom: 5px;">
                 <strong>Top</strong> <span id="top-count">27</span>
                 <div id="top-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
@@ -562,6 +566,7 @@
         }
 
         function updateUI() {
+            document.getElementById('level').textContent = levelCard;
             document.getElementById('hand-count').textContent = hands[0].length;
             document.getElementById('right-count').textContent = hands[1].length;
             document.getElementById('top-count').textContent = hands[2].length;
