@@ -970,89 +970,158 @@
             let validPlay = null;
 
             if (!lastPlayPattern) {
-                // Leading - prioritize getting rid of singles or low cards
-                if (hands[currentPlayer].length <= 3) {
-                    // Few cards left - play whatever you can
-                    validPlay = hands[currentPlayer].slice(0, Math.min(2, hands[currentPlayer].length));
-                } else {
-                    // Play smallest single
-                    validPlay = [hands[currentPlayer][0]];
-                }
-            } else {
-                // Try to beat previous play with smallest possible cards
-                const targetType = lastPlayPattern.type;
-                const targetRank = lastPlayPattern.rank;
+                // Leading - choose best cards to lead with
+                const hand = hands[currentPlayer];
 
-                // Find all valid plays, then choose the smallest one
-                const possiblePlays = [];
-
-                if (targetType === 'single') {
-                    for (let card of hands[currentPlayer]) {
-                        if (getEffectiveRank(card) > targetRank) {
-                            possiblePlays.push([card]);
-                        }
-                    }
-                } else if (targetType === 'pair') {
-                    for (let i = 0; i < hands[currentPlayer].length - 1; i++) {
-                        const r1 = getEffectiveRank(hands[currentPlayer][i]);
-                        const r2 = getEffectiveRank(hands[currentPlayer][i+1]);
-                        if (r1 === r2 && r1 > targetRank) {
-                            possiblePlays.push([hands[currentPlayer][i], hands[currentPlayer][i+1]]);
-                            break; // Take first (smallest) valid pair
-                        }
-                    }
-                } else if (targetType === 'triple') {
-                    for (let i = 0; i < hands[currentPlayer].length - 2; i++) {
-                        const r1 = getEffectiveRank(hands[currentPlayer][i]);
-                        const r2 = getEffectiveRank(hands[currentPlayer][i+1]);
-                        const r3 = getEffectiveRank(hands[currentPlayer][i+2]);
-                        if (r1 === r2 && r2 === r3 && r1 > targetRank) {
-                            possiblePlays.push([hands[currentPlayer][i], hands[currentPlayer][i+1], hands[currentPlayer][i+2]]);
+                // Priority 1: If low on cards (<= 5), try to play everything possible
+                if (hand.length <= 5) {
+                    // Try to play all cards as one pattern
+                    for (let len = hand.length; len >= 1; len--) {
+                        const testCards = hand.slice(0, len);
+                        const pattern = identifyPattern(testCards);
+                        if (pattern) {
+                            validPlay = testCards;
                             break;
                         }
                     }
-                } else if (targetType === 'bomb') {
-                    // Only beat bomb with bigger bomb if desperate
-                    if (hands[currentPlayer].length <= 5) {
-                        for (let i = 0; i < hands[currentPlayer].length - 3; i++) {
-                            const r1 = getEffectiveRank(hands[currentPlayer][i]);
-                            let bombSize = 1;
-                            for (let j = i + 1; j < hands[currentPlayer].length; j++) {
-                                if (getEffectiveRank(hands[currentPlayer][j]) === r1) {
-                                    bombSize++;
-                                } else {
-                                    break;
-                                }
-                            }
-                            if (bombSize > lastPlayPattern.count || (bombSize === lastPlayPattern.count && r1 > targetRank)) {
-                                possiblePlays.push(hands[currentPlayer].slice(i, i + bombSize));
-                                break;
-                            }
+                }
+
+                // Priority 2: Look for straights (5 cards)
+                if (!validPlay && hand.length >= 5) {
+                    for (let i = 0; i <= hand.length - 5; i++) {
+                        const testCards = hand.slice(i, i + 5);
+                        const pattern = identifyPattern(testCards);
+                        if (pattern && (pattern.type === 'straight' || pattern.type === 'flush_straight' || pattern.type === 'flush_straight_bomb')) {
+                            validPlay = testCards;
+                            break;
                         }
                     }
                 }
 
-                // Choose smallest valid play
-                if (possiblePlays.length > 0) {
-                    validPlay = possiblePlays[0];
+                // Priority 3: Look for triples
+                if (!validPlay) {
+                    for (let i = 0; i <= hand.length - 3; i++) {
+                        const r1 = getEffectiveRank(hand[i]);
+                        const r2 = getEffectiveRank(hand[i+1]);
+                        const r3 = getEffectiveRank(hand[i+2]);
+                        if (r1 === r2 && r2 === r3 && r1 < 12) { // Don't lead with high triples
+                            validPlay = [hand[i], hand[i+1], hand[i+2]];
+                            break;
+                        }
+                    }
                 }
 
-                // Try bomb if desperate (very few cards left and no other option)
-                if (!validPlay && hands[currentPlayer].length <= 6 && !isPartner) {
-                    for (let i = 0; i < hands[currentPlayer].length - 3; i++) {
-                        const r1 = getEffectiveRank(hands[currentPlayer][i]);
+                // Priority 4: Look for pairs
+                if (!validPlay) {
+                    for (let i = 0; i <= hand.length - 2; i++) {
+                        const r1 = getEffectiveRank(hand[i]);
+                        const r2 = getEffectiveRank(hand[i+1]);
+                        if (r1 === r2 && r1 < 10) { // Don't lead with high pairs
+                            validPlay = [hand[i], hand[i+1]];
+                            break;
+                        }
+                    }
+                }
+
+                // Priority 5: Play lowest single
+                if (!validPlay && hand.length > 0) {
+                    validPlay = [hand[0]];
+                }
+            } else {
+                // Try to beat previous play
+                const targetType = lastPlayPattern.type;
+                const targetRank = lastPlayPattern.rank;
+                const hand = hands[currentPlayer];
+
+                // Strategy: Find all valid plays, then choose smartest one
+                const possiblePlays = [];
+
+                if (targetType === 'single') {
+                    for (let i = 0; i < hand.length; i++) {
+                        if (getEffectiveRank(hand[i]) > targetRank) {
+                            possiblePlays.push({cards: [hand[i]], rank: getEffectiveRank(hand[i]), type: 'single'});
+                        }
+                    }
+                } else if (targetType === 'pair') {
+                    for (let i = 0; i <= hand.length - 2; i++) {
+                        const r1 = getEffectiveRank(hand[i]);
+                        const r2 = getEffectiveRank(hand[i+1]);
+                        if (r1 === r2 && r1 > targetRank) {
+                            possiblePlays.push({cards: [hand[i], hand[i+1]], rank: r1, type: 'pair'});
+                            break; // Take first valid pair
+                        }
+                    }
+                } else if (targetType === 'triple') {
+                    for (let i = 0; i <= hand.length - 3; i++) {
+                        const r1 = getEffectiveRank(hand[i]);
+                        const r2 = getEffectiveRank(hand[i+1]);
+                        const r3 = getEffectiveRank(hand[i+2]);
+                        if (r1 === r2 && r2 === r3 && r1 > targetRank) {
+                            possiblePlays.push({cards: [hand[i], hand[i+1], hand[i+2]], rank: r1, type: 'triple'});
+                            break;
+                        }
+                    }
+                } else if (targetType === 'straight') {
+                    // Try to find a straight that beats it
+                    for (let i = 0; i <= hand.length - 5; i++) {
+                        const testCards = hand.slice(i, i + 5);
+                        const pattern = identifyPattern(testCards);
+                        if (pattern && pattern.type === 'straight' && pattern.rank > targetRank) {
+                            possiblePlays.push({cards: testCards, rank: pattern.rank, type: 'straight'});
+                            break;
+                        }
+                    }
+                } else if (targetType === 'flush_straight') {
+                    // Try flush straight or bomb
+                    for (let i = 0; i <= hand.length - 5; i++) {
+                        const testCards = hand.slice(i, i + 5);
+                        const pattern = identifyPattern(testCards);
+                        if (pattern && (pattern.type === 'flush_straight' || pattern.type === 'flush_straight_bomb') && pattern.rank > targetRank) {
+                            possiblePlays.push({cards: testCards, rank: pattern.rank, type: pattern.type});
+                            break;
+                        }
+                    }
+                }
+
+                // Choose best play: smallest rank that beats target
+                if (possiblePlays.length > 0) {
+                    possiblePlays.sort((a, b) => a.rank - b.rank);
+                    validPlay = possiblePlays[0].cards;
+                }
+
+                // Try bomb if no regular play works and desperate
+                if (!validPlay && hand.length <= 8 && !isPartner) {
+                    // Look for bombs
+                    for (let i = 0; i <= hand.length - 4; i++) {
+                        const r1 = getEffectiveRank(hand[i]);
                         let bombSize = 1;
-                        for (let j = i + 1; j < hands[currentPlayer].length; j++) {
-                            if (getEffectiveRank(hands[currentPlayer][j]) === r1) {
+                        for (let j = i + 1; j < hand.length; j++) {
+                            if (getEffectiveRank(hand[j]) === r1) {
                                 bombSize++;
                             } else {
                                 break;
                             }
                         }
                         if (bombSize >= 4) {
-                            possiblePlays.push(hands[currentPlayer].slice(i, i + bombSize));
-                            validPlay = possiblePlays[0];
-                            break;
+                            // Check if this bomb can beat target
+                            const bombPattern = {type: 'bomb', rank: r1, count: bombSize};
+                            const testCards = hand.slice(i, i + bombSize);
+                            if (targetType !== 'bomb' || bombSize > lastPlayPattern.count || (bombSize === lastPlayPattern.count && r1 > targetRank)) {
+                                validPlay = testCards;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Look for flush straight bombs
+                    if (!validPlay) {
+                        for (let i = 0; i <= hand.length - 5; i++) {
+                            const testCards = hand.slice(i, i + 5);
+                            const pattern = identifyPattern(testCards);
+                            if (pattern && pattern.type === 'flush_straight_bomb') {
+                                validPlay = testCards;
+                                break;
+                            }
                         }
                     }
                 }
