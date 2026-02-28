@@ -179,7 +179,8 @@
                 <h3>Guandan Card Game</h3>
                 <p>4 players • 2 teams • Progress from 2 to A</p>
                 <p>You & Top vs Right & Left</p>
-                <p><small>Proper Guandan rules: match pattern & beat rank!</small></p>
+                <p><small>Heart level cards (♥) are wild cards!</small></p>
+                <p><small>Both team members must finish to win</small></p>
             </div>
             <button onclick="startGame()">Start Game</button>
         </div>
@@ -248,6 +249,11 @@
             if (card.rank === 'SMALL_JOKER') return 98;
             if (card.rank === levelCard) return 15; // Level card ranks higher than normal
             return BASE_RANKS.indexOf(card.rank) + 3; // 3-15
+        }
+
+        // Check if card is a heart level card (wild card)
+        function isHeartLevelCard(card) {
+            return card.rank === levelCard && card.suit === '♥';
         }
 
         function createDeck() {
