@@ -240,6 +240,7 @@
         let team2Level = '2';
         let passCount = 0;
         let playerActions = ['', '', '', '']; // Track each player's last action
+        let finishedPlayers = []; // Track players who finished all cards
 
         // Get effective rank considering level card
         function getEffectiveRank(card) {
@@ -493,6 +494,7 @@
             passCount = 0;
             selected = [];
             playerActions = ['-', '-', '-', '-'];
+            finishedPlayers = [];
 
             renderHand();
             updateUI();
@@ -632,10 +634,20 @@
             updateUI();
 
             if (hands[0].length === 0) {
-                setTimeout(() => {
-                    alert('🎉 You finished! You win this round! 🎉');
-                    location.reload();
-                }, 500);
+                finishedPlayers.push(0);
+                showMessage('You finished all cards! Waiting for partner...');
+
+                // Check if partner (player 2) also finished - Team 1 wins
+                if (finishedPlayers.includes(2)) {
+                    setTimeout(() => {
+                        alert('🎉 Team 1 (You & Top) wins! Both players finished! 🎉');
+                        location.reload();
+                    }, 1000);
+                    return;
+                }
+
+                // Continue game for others
+                setTimeout(nextTurn, 2000);
                 return;
             }
 
@@ -677,7 +689,7 @@
         function nextTurn() {
             do {
                 currentPlayer = (currentPlayer + 1) % 4;
-            } while (hands[currentPlayer].length === 0);
+            } while (finishedPlayers.includes(currentPlayer));
 
             if (currentPlayer === 0) {
                 if (lastPlayPattern) {
@@ -869,10 +881,35 @@
             updateUI();
 
             if (hands[currentPlayer].length === 0) {
-                setTimeout(() => {
-                    alert(names[currentPlayer] + ' finished! Round ends.');
-                    location.reload();
-                }, 2000);
+                finishedPlayers.push(currentPlayer);
+                showMessage(names[currentPlayer] + ' finished! Waiting for partner...');
+
+                // Check team wins: Team 1 (You=0, Top=2), Team 2 (Right=1, Left=3)
+                if (currentPlayer === 1 && finishedPlayers.includes(3)) {
+                    // Team 2 wins
+                    setTimeout(() => {
+                        alert('Team 2 (Right & Left) wins! Both players finished!');
+                        location.reload();
+                    }, 2000);
+                    return;
+                } else if (currentPlayer === 2 && finishedPlayers.includes(0)) {
+                    // Team 1 wins
+                    setTimeout(() => {
+                        alert('🎉 Team 1 (You & Top) wins! Both players finished! 🎉');
+                        location.reload();
+                    }, 2000);
+                    return;
+                } else if (currentPlayer === 3 && finishedPlayers.includes(1)) {
+                    // Team 2 wins
+                    setTimeout(() => {
+                        alert('Team 2 (Right & Left) wins! Both players finished!');
+                        location.reload();
+                    }, 2000);
+                    return;
+                }
+
+                // Continue game
+                setTimeout(nextTurn, 2000);
                 return;
             }
 
