@@ -67,46 +67,67 @@
 
         .card {
             display: inline-block;
-            width: 32px;
-            height: 48px;
+            width: 50px;
+            height: 70px;
             background: white;
-            border-radius: 4px;
-            margin: 1px;
+            border-radius: 6px;
+            margin-left: -25px;
             text-align: center;
-            padding-top: 4px;
-            font-size: 14px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
+            padding-top: 8px;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            transition: all 0.2s;
             vertical-align: bottom;
+            position: relative;
+            border: 2px solid #ddd;
+        }
+
+        .card:first-child {
+            margin-left: 0;
         }
 
         .card.selected {
-            transform: translateY(-12px);
-            border: 2px solid #1976D2;
-            box-shadow: 0 3px 6px rgba(25, 118, 210, 0.5);
+            transform: translateY(-20px);
+            border: 3px solid #1976D2;
+            box-shadow: 0 4px 8px rgba(25, 118, 210, 0.6);
+            z-index: 10;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            z-index: 5;
+            cursor: pointer;
         }
 
         .card.red { color: #D32F2F; }
         .card.black { color: #000; }
 
         .card-rank {
-            font-size: 12px;
+            font-size: 18px;
             font-weight: bold;
-            line-height: 1;
+            line-height: 1.2;
         }
 
         .card-suit {
-            font-size: 14px;
-            line-height: 1;
+            font-size: 20px;
+            line-height: 1.2;
         }
 
         #hand {
             background: rgba(0,0,0,0.3);
-            padding: 8px;
+            padding: 10px;
             border-radius: 10px;
             margin: 10px 0;
-            white-space: normal;
+            white-space: nowrap;
             text-align: center;
+            overflow-x: auto;
+            overflow-y: visible;
+            padding-bottom: 30px;
+        }
+
+        #hand-cards {
+            display: inline-block;
+            padding-left: 25px;
         }
 
         .opponent {
@@ -712,11 +733,12 @@
 
                 if (card.rank === 'SMALL_JOKER' || card.rank === 'BIG_JOKER') {
                     // Joker card - fill entire card with emoji
-                    cardEl.style.fontSize = '32px';
+                    cardEl.style.fontSize = '40px';
                     cardEl.style.display = 'inline-flex';
                     cardEl.style.alignItems = 'center';
                     cardEl.style.justifyContent = 'center';
                     cardEl.style.padding = '0';
+                    cardEl.style.marginLeft = idx === 0 ? '0' : '-25px';
                     // Different icons for big vs small joker
                     if (card.rank === 'BIG_JOKER') {
                         cardEl.textContent = '🃏'; // Big joker
