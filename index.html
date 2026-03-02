@@ -188,17 +188,20 @@
         <div id="game-area">
             <div style="background: rgba(0,0,0,0.2); padding: 5px; border-radius: 6px; text-align: center; font-size: 12px; margin-bottom: 5px;">
                 <strong>Level Card: <span id="level">2</span></strong>
+                <button onclick="toggleDebug()" style="margin-left: 10px; padding: 2px 8px; font-size: 11px; cursor: pointer;">🐛 Debug</button>
             </div>
 
             <div class="opponent" style="width: 100%; margin-bottom: 5px;">
                 <strong>Top</strong> <span id="top-count">27</span>
                 <div id="top-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
+                <div id="top-debug" style="font-size: 9px; color: #FFD700; margin-top: 3px; display: none;"></div>
             </div>
 
             <div style="display: flex; gap: 5px; align-items: stretch;">
                 <div class="opponent" style="flex: 1;">
                     <strong>Left</strong><br><span id="left-count">27</span>
                     <div id="left-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
+                    <div id="left-debug" style="font-size: 9px; color: #FFD700; margin-top: 3px; display: none;"></div>
                 </div>
                 <div id="play-area" style="flex: 8;">
                     <div id="turn-message">Your turn!</div>
@@ -206,6 +209,7 @@
                 <div class="opponent" style="flex: 1;">
                     <strong>Right</strong><br><span id="right-count">27</span>
                     <div id="right-action" style="margin-top: 2px; font-size: 10px; min-height: 15px;">-</div>
+                    <div id="right-debug" style="font-size: 9px; color: #FFD700; margin-top: 3px; display: none;"></div>
                 </div>
             </div>
 
@@ -242,6 +246,7 @@
         let passCount = 0;
         let playerActions = ['', '', '', '']; // Track each player's last action
         let finishedPlayers = []; // Track players who finished all cards
+        let debugMode = false; // Debug mode to show all hands
 
         // Get effective rank considering level card
         function getEffectiveRank(card) {
@@ -253,6 +258,8 @@
 
         // Check if card is a heart level card (wild card)
         function isHeartLevelCard(card) {
+            // Wild cards cannot be jokers
+            if (card.rank === 'SMALL_JOKER' || card.rank === 'BIG_JOKER') return false;
             return card.rank === levelCard && card.suit === '♥';
         }
 
@@ -775,7 +782,53 @@
             document.getElementById('top-action').textContent = playerActions[2] || '-';
             document.getElementById('left-action').textContent = playerActions[3] || '-';
 
+            // Update debug display
+            if (debugMode) {
+                updateDebugDisplay();
+            }
+
             updateButtons();
+        }
+
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const debugDivs = ['right-debug', 'top-debug', 'left-debug'];
+            debugDivs.forEach(id => {
+                const el = document.getElementById(id);
+                el.style.display = debugMode ? 'block' : 'none';
+            });
+            if (debugMode) {
+                updateDebugDisplay();
+            }
+        }
+
+        function updateDebugDisplay() {
+            // Show Right's cards
+            const rightCards = hands[1].map(c => {
+                let r = c.rank;
+                if (c.rank === 'SMALL_JOKER') r = '🎭';
+                else if (c.rank === 'BIG_JOKER') r = '🃏';
+                return r + c.suit;
+            }).join(' ');
+            document.getElementById('right-debug').textContent = rightCards || '(empty)';
+
+            // Show Top's cards
+            const topCards = hands[2].map(c => {
+                let r = c.rank;
+                if (c.rank === 'SMALL_JOKER') r = '🎭';
+                else if (c.rank === 'BIG_JOKER') r = '🃏';
+                return r + c.suit;
+            }).join(' ');
+            document.getElementById('top-debug').textContent = topCards || '(empty)';
+
+            // Show Left's cards
+            const leftCards = hands[3].map(c => {
+                let r = c.rank;
+                if (c.rank === 'SMALL_JOKER') r = '🎭';
+                else if (c.rank === 'BIG_JOKER') r = '🃏';
+                return r + c.suit;
+            }).join(' ');
+            document.getElementById('left-debug').textContent = leftCards || '(empty)';
         }
 
         function playCards() {
