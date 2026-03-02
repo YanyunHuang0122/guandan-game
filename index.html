@@ -72,8 +72,8 @@
             background: white;
             border-radius: 5px;
             margin-left: -28px;
-            text-align: center;
-            padding-top: 6px;
+            text-align: left;
+            padding: 3px 0 0 3px;
             font-size: 14px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.4);
             transition: all 0.2s;
@@ -103,14 +103,17 @@
         .card.black { color: #000; }
 
         .card-rank {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            line-height: 1.1;
+            line-height: 1;
+            display: block;
         }
 
         .card-suit {
-            font-size: 16px;
-            line-height: 1.1;
+            font-size: 15px;
+            line-height: 1;
+            display: block;
+            margin-top: 1px;
         }
 
         /* Mobile responsive */
@@ -119,7 +122,7 @@
                 width: 35px !important;
                 height: 50px !important;
                 margin-left: -25px !important;
-                padding-top: 4px !important;
+                padding: 2px 0 0 2px !important;
             }
 
             .card:first-child {
@@ -127,11 +130,11 @@
             }
 
             .card-rank {
-                font-size: 12px !important;
+                font-size: 11px !important;
             }
 
             .card-suit {
-                font-size: 14px !important;
+                font-size: 13px !important;
             }
 
             #hand-cards {
