@@ -71,7 +71,7 @@
             height: 70px;
             background: white;
             border-radius: 6px;
-            margin-left: -25px;
+            margin-left: -15px;
             text-align: center;
             padding-top: 8px;
             font-size: 16px;
@@ -127,7 +127,7 @@
 
         #hand-cards {
             display: inline-block;
-            padding-left: 25px;
+            padding-left: 15px;
         }
 
         .opponent {
@@ -738,7 +738,7 @@
                     cardEl.style.alignItems = 'center';
                     cardEl.style.justifyContent = 'center';
                     cardEl.style.padding = '0';
-                    cardEl.style.marginLeft = idx === 0 ? '0' : '-25px';
+                    cardEl.style.marginLeft = idx === 0 ? '0' : '-15px';
                     // Different icons for big vs small joker
                     if (card.rank === 'BIG_JOKER') {
                         cardEl.textContent = '🃏'; // Big joker
@@ -1099,25 +1099,39 @@
                     }
                 }
 
-                // Priority 3: Look for triples
+                // Priority 3: Look for triples (but not bombs)
                 if (!validPlay) {
                     for (let i = 0; i <= hand.length - 3; i++) {
                         const r1 = getEffectiveRank(hand[i]);
                         const r2 = getEffectiveRank(hand[i+1]);
                         const r3 = getEffectiveRank(hand[i+2]);
-                        if (r1 === r2 && r2 === r3 && r1 < 12) { // Don't lead with high triples
+
+                        // Don't split bombs - check if there's a 4th card
+                        let isBomb = false;
+                        if (i + 3 < hand.length && getEffectiveRank(hand[i+3]) === r1) {
+                            isBomb = true;
+                        }
+
+                        if (r1 === r2 && r2 === r3 && r1 < 12 && !isBomb) { // Don't lead with high triples or split bombs
                             validPlay = [hand[i], hand[i+1], hand[i+2]];
                             break;
                         }
                     }
                 }
 
-                // Priority 4: Look for pairs
+                // Priority 4: Look for pairs (but not triples/bombs)
                 if (!validPlay) {
                     for (let i = 0; i <= hand.length - 2; i++) {
                         const r1 = getEffectiveRank(hand[i]);
                         const r2 = getEffectiveRank(hand[i+1]);
-                        if (r1 === r2 && r1 < 10) { // Don't lead with high pairs
+
+                        // Don't split triples or bombs
+                        let hasMoreCards = false;
+                        if (i + 2 < hand.length && getEffectiveRank(hand[i+2]) === r1) {
+                            hasMoreCards = true;
+                        }
+
+                        if (r1 === r2 && r1 < 10 && !hasMoreCards) { // Don't lead with high pairs or split triples
                             validPlay = [hand[i], hand[i+1]];
                             break;
                         }
@@ -1147,7 +1161,14 @@
                     for (let i = 0; i <= hand.length - 2; i++) {
                         const r1 = getEffectiveRank(hand[i]);
                         const r2 = getEffectiveRank(hand[i+1]);
-                        if (r1 === r2 && r1 > targetRank) {
+
+                        // Don't split triples or bombs - check if there's a 3rd/4th card of same rank
+                        let hasMoreCards = false;
+                        if (i + 2 < hand.length && getEffectiveRank(hand[i+2]) === r1) {
+                            hasMoreCards = true; // This is a triple or bomb, don't split
+                        }
+
+                        if (r1 === r2 && r1 > targetRank && !hasMoreCards) {
                             possiblePlays.push({cards: [hand[i], hand[i+1]], rank: r1, type: 'pair'});
                             break; // Take first valid pair
                         }
@@ -1157,7 +1178,14 @@
                         const r1 = getEffectiveRank(hand[i]);
                         const r2 = getEffectiveRank(hand[i+1]);
                         const r3 = getEffectiveRank(hand[i+2]);
-                        if (r1 === r2 && r2 === r3 && r1 > targetRank) {
+
+                        // Don't split bombs - check if there's a 4th card of same rank
+                        let isBomb = false;
+                        if (i + 3 < hand.length && getEffectiveRank(hand[i+3]) === r1) {
+                            isBomb = true; // This is a bomb, don't split
+                        }
+
+                        if (r1 === r2 && r2 === r3 && r1 > targetRank && !isBomb) {
                             possiblePlays.push({cards: [hand[i], hand[i+1], hand[i+2]], rank: r1, type: 'triple'});
                             break;
                         }
