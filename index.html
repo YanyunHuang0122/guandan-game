@@ -817,15 +817,15 @@
                     jokerIcon.style.marginLeft = '8px';
 
                     if (card.rank === 'BIG_JOKER') {
-                        // Big Joker = rank 99 (bigger, black)
-                        jokerText.style.color = '#000';
-                        jokerIcon.textContent = '🃏';
-                        cardEl.classList.add('black');
-                    } else {
-                        // Small Joker = rank 98 (smaller, red)
+                        // Big Joker = rank 99 (bigger, RED)
                         jokerText.style.color = '#D32F2F';
                         jokerIcon.textContent = '🎭';
                         cardEl.classList.add('red');
+                    } else {
+                        // Small Joker = rank 98 (smaller, BLACK)
+                        jokerText.style.color = '#000';
+                        jokerIcon.textContent = '🃏';
+                        cardEl.classList.add('black');
                     }
 
                     cardEl.appendChild(jokerText);
