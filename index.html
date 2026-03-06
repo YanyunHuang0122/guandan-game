@@ -790,7 +790,7 @@
                     cardEl.style.alignItems = 'center';
                     cardEl.style.justifyContent = 'center';
                     cardEl.style.padding = '0';
-                    cardEl.style.marginLeft = idx === 0 ? '0' : '-28px';
+                    // Use same overlap as regular cards (handled by CSS)
                     // Different icons for big vs small joker
                     if (card.rank === 'BIG_JOKER') {
                         cardEl.textContent = '🃏'; // Big joker
