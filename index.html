@@ -92,8 +92,13 @@
             box-shadow: 0 4px 8px rgba(25, 118, 210, 0.6);
         }
 
-        .card:hover {
+        .card:hover:not(.selected) {
             transform: translateY(-16px);
+            cursor: pointer;
+        }
+
+        .card.selected:hover {
+            transform: translateY(-40px);
             cursor: pointer;
         }
 
