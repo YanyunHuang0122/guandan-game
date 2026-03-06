@@ -80,7 +80,6 @@
             vertical-align: bottom;
             position: relative;
             border: 2px solid #ddd;
-            z-index: 2;
         }
 
         .card:first-child {
@@ -91,7 +90,6 @@
             transform: translateY(-40px);
             border: 3px solid #1976D2;
             box-shadow: 0 4px 8px rgba(25, 118, 210, 0.6);
-            z-index: 1;
         }
 
         .card:hover {
@@ -779,6 +777,10 @@
             hands[0].forEach((card, idx) => {
                 const cardEl = document.createElement('div');
                 cardEl.className = 'card ' + card.color;
+
+                // Set z-index: higher index = lower z-index so right cards appear on top
+                const baseZIndex = selected.includes(idx) ? 1 : 100;
+                cardEl.style.zIndex = baseZIndex - idx;
 
                 if (card.rank === 'SMALL_JOKER' || card.rank === 'BIG_JOKER') {
                     // Joker card - fill entire card with emoji
