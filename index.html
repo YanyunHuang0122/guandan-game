@@ -114,8 +114,8 @@
         }
 
         .joker-text {
-            font-size: 16px;
-            letter-spacing: 2px;
+            font-size: 12px;
+            letter-spacing: 1px;
             line-height: 1;
         }
 
@@ -145,8 +145,8 @@
             }
 
             .joker-text {
-                font-size: 18px !important;
-                letter-spacing: 1px !important;
+                font-size: 10px !important;
+                letter-spacing: 0.5px !important;
                 line-height: 1 !important;
                 -webkit-text-orientation: upright !important;
                 -webkit-writing-mode: vertical-rl !important;
@@ -801,10 +801,11 @@
                 cardEl.style.zIndex = idx;
 
                 if (card.rank === 'SMALL_JOKER' || card.rank === 'BIG_JOKER') {
-                    // Joker card - display "JOKER" vertically on left side
+                    // Joker card - display "JOKER" vertically on left side with icon
                     cardEl.style.display = 'inline-flex';
-                    cardEl.style.alignItems = 'flex-start';
-                    cardEl.style.justifyContent = 'flex-start';
+                    cardEl.style.alignItems = 'center';
+                    cardEl.style.justifyContent = 'space-between';
+                    cardEl.style.padding = '4px';
 
                     const jokerText = document.createElement('div');
                     jokerText.className = 'joker-text';
@@ -813,15 +814,22 @@
                     jokerText.style.fontWeight = 'bold';
                     jokerText.textContent = 'JOKER';
 
+                    const jokerIcon = document.createElement('div');
+                    jokerIcon.style.fontSize = '32px';
+                    jokerIcon.style.marginLeft = '8px';
+
                     if (card.rank === 'BIG_JOKER') {
                         jokerText.style.color = '#000'; // Black for rank 98
+                        jokerIcon.textContent = '🃏';
                         cardEl.classList.add('black');
                     } else {
                         jokerText.style.color = '#D32F2F'; // Red for rank 99
+                        jokerIcon.textContent = '🎭';
                         cardEl.classList.add('red');
                     }
 
                     cardEl.appendChild(jokerText);
+                    cardEl.appendChild(jokerIcon);
                 } else {
                     const rankEl = document.createElement('div');
                     rankEl.className = 'card-rank';
