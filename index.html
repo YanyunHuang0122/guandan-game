@@ -352,15 +352,6 @@
             return card.rank === levelCard && card.suit === '♥';
         }
 
-        // Get next level card
-        function getNextLevel(currentLevel) {
-            const idx = BASE_RANKS.indexOf(currentLevel);
-            if (idx >= 0 && idx < BASE_RANKS.length - 1) {
-                return BASE_RANKS[idx + 1];
-            }
-            return 'A'; // Max level
-        }
-
         function createDeck() {
             deck = [];
             for (let d = 0; d < 2; d++) {
@@ -1006,30 +997,25 @@
             updateUI();
 
             if (hands[0].length === 0) {
-                finishedPlayers.push(0);
+                if (!finishedPlayers.includes(0)) {
+                    finishedPlayers.push(0);
+                }
 
-                // Check if partner (player 2) also finished - Team 1 wins
-                if (finishedPlayers.includes(2)) {
+                // Check if game is over (3 players finished)
+                if (finishedPlayers.length >= 3) {
                     setTimeout(() => {
-                        // Increase team 1 level
-                        const nextLevel = getNextLevel(team1Level);
-                        alert(`🎉 Team 1 (You & Top) wins! Both players finished! 🎉\n\nLevel up: ${team1Level} → ${nextLevel}`);
-                        // In a real game, you'd save progress and start next round
-                        // For now, just reload
-                        location.reload();
+                        checkWinner();
                     }, 1000);
                     return;
                 }
 
-                // You finished - partner leads next after all pass
-                showMessage('You finished all cards! Partner will lead next.');
+                // You finished - continue game
+                showMessage('You finished all cards! Waiting for others...');
 
-                // Check if you won this trick (all others will pass)
+                // If you won this trick, partner leads next
                 if (lastPlayPlayer === 0) {
-                    // You played last, so after 3 passes, partner leads
-                    // Set current player to partner to lead next
-                    passCount = 3; // Force all passed state
-                    currentPlayer = 2; // Partner will lead
+                    passCount = 3;
+                    currentPlayer = 2; // Partner leads
                     lastPlay = [];
                     lastPlayPattern = null;
                     lastPlayPlayer = -1;
@@ -1042,7 +1028,7 @@
                     return;
                 }
 
-                // Continue game for others
+                // Continue game
                 setTimeout(nextTurn, 2000);
                 return;
             }
@@ -1430,32 +1416,15 @@
             updateUI();
 
             if (hands[currentPlayer].length === 0) {
-                finishedPlayers.push(currentPlayer);
-                showMessage(names[currentPlayer] + ' finished! Waiting for partner...');
+                if (!finishedPlayers.includes(currentPlayer)) {
+                    finishedPlayers.push(currentPlayer);
+                }
+                showMessage(names[currentPlayer] + ' finished! Waiting for others...');
 
-                // Check team wins: Team 1 (You=0, Top=2), Team 2 (Right=1, Left=3)
-                if (currentPlayer === 1 && finishedPlayers.includes(3)) {
-                    // Team 2 wins
-                    const nextLevel = getNextLevel(team2Level);
+                // Check if game is over (3 players finished)
+                if (finishedPlayers.length >= 3) {
                     setTimeout(() => {
-                        alert(`Team 2 (Right & Left) wins! Both players finished!\n\nLevel up: ${team2Level} → ${nextLevel}`);
-                        location.reload();
-                    }, 2000);
-                    return;
-                } else if (currentPlayer === 2 && finishedPlayers.includes(0)) {
-                    // Team 1 wins
-                    const nextLevel = getNextLevel(team1Level);
-                    setTimeout(() => {
-                        alert(`🎉 Team 1 (You & Top) wins! Both players finished! 🎉\n\nLevel up: ${team1Level} → ${nextLevel}`);
-                        location.reload();
-                    }, 2000);
-                    return;
-                } else if (currentPlayer === 3 && finishedPlayers.includes(1)) {
-                    // Team 2 wins
-                    const nextLevel = getNextLevel(team2Level);
-                    setTimeout(() => {
-                        alert(`Team 2 (Right & Left) wins! Both players finished!\n\nLevel up: ${team2Level} → ${nextLevel}`);
-                        location.reload();
+                        checkWinner();
                     }, 2000);
                     return;
                 }
@@ -1471,6 +1440,75 @@
 
         function showMessage(msg) {
             document.getElementById('turn-message').textContent = msg;
+        }
+
+        function checkWinner() {
+            // finishedPlayers has 3 players, determine winner based on order
+            // Team 1: You (0) and Top (2)
+            // Team 2: Right (1) and Left (3)
+
+            const firstFinisher = finishedPlayers[0];
+            const secondFinisher = finishedPlayers[1];
+            const thirdFinisher = finishedPlayers[2];
+
+            // Determine which team won based on first finisher
+            let winningTeam, losingTeam, levelIncrease, resultType;
+
+            if (firstFinisher === 0 || firstFinisher === 2) {
+                // Team 1 finished first
+                winningTeam = 'Team 1 (You & Top)';
+                losingTeam = 'Team 2 (Right & Left)';
+
+                // Check 2nd finisher
+                if (secondFinisher === 0 || secondFinisher === 2) {
+                    // Both team members finished 1st and 2nd = 双下 (+3)
+                    levelIncrease = 3;
+                    resultType = '双下 (Both 1st & 2nd)';
+                } else if (thirdFinisher === 0 || thirdFinisher === 2) {
+                    // Team members finished 1st and 3rd = 单下 (+2)
+                    levelIncrease = 2;
+                    resultType = '单下 (1st & 3rd)';
+                } else {
+                    // Team member finished 1st, partner finished last = 平局 (+1)
+                    levelIncrease = 1;
+                    resultType = '平局 (1st & 4th)';
+                }
+
+                const currentLevel = levelCard;
+                levelCard = getNextLevel(levelCard, levelIncrease);
+                alert(`🎉 ${winningTeam} wins! ${resultType} 🎉\n\nLevel: ${currentLevel} → ${levelCard} (+${levelIncrease})`);
+            } else {
+                // Team 2 finished first
+                winningTeam = 'Team 2 (Right & Left)';
+                losingTeam = 'Team 1 (You & Top)';
+
+                // Check 2nd finisher
+                if (secondFinisher === 1 || secondFinisher === 3) {
+                    // Both team members finished 1st and 2nd = 双下 (+3)
+                    levelIncrease = 3;
+                    resultType = '双下 (Both 1st & 2nd)';
+                } else if (thirdFinisher === 1 || thirdFinisher === 3) {
+                    // Team members finished 1st and 3rd = 单下 (+2)
+                    levelIncrease = 2;
+                    resultType = '单下 (1st & 3rd)';
+                } else {
+                    // Team member finished 1st, partner finished last = 平局 (+1)
+                    levelIncrease = 1;
+                    resultType = '平局 (1st & 4th)';
+                }
+
+                alert(`${winningTeam} wins! ${resultType}\n\nYou lost this round. Level stays at ${levelCard}.`);
+            }
+
+            // Start new round with updated level
+            startGame();
+        }
+
+        function getNextLevel(currentLevel, increment = 1) {
+            const levels = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+            const currentIndex = levels.indexOf(currentLevel);
+            const nextIndex = Math.min(currentIndex + increment, levels.length - 1);
+            return levels[nextIndex];
         }
     </script>
 </body>
