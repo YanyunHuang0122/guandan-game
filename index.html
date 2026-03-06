@@ -94,7 +94,6 @@
 
         .card:hover {
             transform: translateY(-16px);
-            z-index: 5;
             cursor: pointer;
         }
 
@@ -774,13 +773,19 @@
             const handEl = document.getElementById('hand-cards');
             handEl.innerHTML = '';
 
+            const totalCards = hands[0].length;
+
             hands[0].forEach((card, idx) => {
                 const cardEl = document.createElement('div');
                 cardEl.className = 'card ' + card.color;
 
-                // Set z-index: higher index = lower z-index so right cards appear on top
-                const baseZIndex = selected.includes(idx) ? 1 : 100;
-                cardEl.style.zIndex = baseZIndex - idx;
+                // Set z-index: unselected cards get high z-index (1000-idx)
+                // Selected cards get very low z-index (-1000+idx) so they're behind everything
+                if (selected.includes(idx)) {
+                    cardEl.style.zIndex = -1000 + idx;
+                } else {
+                    cardEl.style.zIndex = 1000 - idx;
+                }
 
                 if (card.rank === 'SMALL_JOKER' || card.rank === 'BIG_JOKER') {
                     // Joker card - fill entire card with emoji
