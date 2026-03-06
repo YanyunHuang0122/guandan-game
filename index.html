@@ -941,8 +941,8 @@
             // Show Right's cards
             const rightCards = hands[1].map(c => {
                 let r = c.rank;
-                if (c.rank === 'SMALL_JOKER') r = '🎭';
-                else if (c.rank === 'BIG_JOKER') r = '🃏';
+                if (c.rank === 'SMALL_JOKER') r = '🃏'; // Small Joker (rank 98, black)
+                else if (c.rank === 'BIG_JOKER') r = '🎭'; // Big Joker (rank 99, red)
                 return r + c.suit;
             }).join(' ');
             document.getElementById('right-debug').textContent = rightCards || '(empty)';
@@ -950,8 +950,8 @@
             // Show Top's cards
             const topCards = hands[2].map(c => {
                 let r = c.rank;
-                if (c.rank === 'SMALL_JOKER') r = '🎭';
-                else if (c.rank === 'BIG_JOKER') r = '🃏';
+                if (c.rank === 'SMALL_JOKER') r = '🃏'; // Small Joker (rank 98, black)
+                else if (c.rank === 'BIG_JOKER') r = '🎭'; // Big Joker (rank 99, red)
                 return r + c.suit;
             }).join(' ');
             document.getElementById('top-debug').textContent = topCards || '(empty)';
@@ -959,8 +959,8 @@
             // Show Left's cards
             const leftCards = hands[3].map(c => {
                 let r = c.rank;
-                if (c.rank === 'SMALL_JOKER') r = '🎭';
-                else if (c.rank === 'BIG_JOKER') r = '🃏';
+                if (c.rank === 'SMALL_JOKER') r = '🃏'; // Small Joker (rank 98, black)
+                else if (c.rank === 'BIG_JOKER') r = '🎭'; // Big Joker (rank 99, red)
                 return r + c.suit;
             }).join(' ');
             document.getElementById('left-debug').textContent = leftCards || '(empty)';
