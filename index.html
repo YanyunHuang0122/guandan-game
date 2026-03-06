@@ -267,10 +267,14 @@
         </div>
 
         <div id="game-area">
-            <div style="background: rgba(0,0,0,0.2); padding: 5px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 5px;">
-                <button onclick="restartGame()" style="padding: 2px 8px; font-size: 11px; cursor: pointer; background: #F57C00;">🔄 Restart</button>
-                <strong>Level Card: <span id="level">2</span></strong>
-                <button onclick="toggleDebug()" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">🐛 Debug</button>
+            <div style="background: rgba(0,0,0,0.2); padding: 5px; border-radius: 6px; font-size: 12px; margin-bottom: 5px;">
+                <div style="text-align: center; margin-bottom: 5px;">
+                    <strong>Level Card: <span id="level">2</span></strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <button onclick="restartGame()" style="padding: 2px 8px; font-size: 11px; cursor: pointer; background: #F57C00;">🔄 Restart</button>
+                    <button onclick="toggleDebug()" style="padding: 2px 8px; font-size: 11px; cursor: pointer;">🐛 Debug</button>
+                </div>
             </div>
 
             <div class="opponent" style="width: 100%; margin-bottom: 5px;">
