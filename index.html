@@ -352,6 +352,26 @@
             return card.rank === levelCard && card.suit === '♥';
         }
 
+        // Count how many cards of the same actual rank (not wild cards)
+        function countSameRankCards(hand, startIndex) {
+            const baseCard = hand[startIndex];
+            if (isHeartLevelCard(baseCard)) return 1; // Wild card counts as 1
+
+            const baseRank = baseCard.rank;
+            let count = 1;
+
+            for (let i = startIndex + 1; i < hand.length; i++) {
+                const card = hand[i];
+                // Only count cards with same actual rank (not wild cards or different effective ranks)
+                if (card.rank === baseRank && !isHeartLevelCard(card) && getEffectiveRank(card) === getEffectiveRank(baseCard)) {
+                    count++;
+                } else {
+                    break;
+                }
+            }
+            return count;
+        }
+
         function createDeck() {
             deck = [];
             for (let d = 0; d < 2; d++) {
@@ -1194,18 +1214,14 @@
                         const r2 = getEffectiveRank(hand[i+1]);
                         const r3 = getEffectiveRank(hand[i+2]);
 
-                        // Don't split bombs - check if there's a 4th card (excluding wilds)
-                        let isBomb = false;
-                        if (i + 3 < hand.length) {
-                            const r4 = getEffectiveRank(hand[i+3]);
-                            if (r4 === r1 && !isHeartLevelCard(hand[i]) && !isHeartLevelCard(hand[i+1]) && !isHeartLevelCard(hand[i+2])) {
-                                isBomb = true;
+                        if (r1 === r2 && r2 === r3 && r1 < 12) {
+                            // Check how many same-rank cards we have
+                            const sameRankCount = countSameRankCards(hand, i);
+                            // Only play triple if we don't have 4+ of same rank (don't split bombs)
+                            if (sameRankCount === 3) {
+                                validPlay = [hand[i], hand[i+1], hand[i+2]];
+                                break;
                             }
-                        }
-
-                        if (r1 === r2 && r2 === r3 && r1 < 12 && !isBomb) { // Don't lead with high triples or split bombs
-                            validPlay = [hand[i], hand[i+1], hand[i+2]];
-                            break;
                         }
                     }
                 }
@@ -1216,18 +1232,14 @@
                         const r1 = getEffectiveRank(hand[i]);
                         const r2 = getEffectiveRank(hand[i+1]);
 
-                        // Don't split triples or bombs (excluding wilds)
-                        let hasMoreCards = false;
-                        if (i + 2 < hand.length) {
-                            const r3 = getEffectiveRank(hand[i+2]);
-                            if (r3 === r1 && !isHeartLevelCard(hand[i]) && !isHeartLevelCard(hand[i+1])) {
-                                hasMoreCards = true;
+                        if (r1 === r2 && r1 < 10) {
+                            // Check how many same-rank cards we have
+                            const sameRankCount = countSameRankCards(hand, i);
+                            // Only play pair if we have exactly 2 (don't split triples/bombs)
+                            if (sameRankCount === 2) {
+                                validPlay = [hand[i], hand[i+1]];
+                                break;
                             }
-                        }
-
-                        if (r1 === r2 && r1 < 10 && !hasMoreCards) { // Don't lead with high pairs or split triples
-                            validPlay = [hand[i], hand[i+1]];
-                            break;
                         }
                     }
                 }
@@ -1256,19 +1268,14 @@
                         const r1 = getEffectiveRank(hand[i]);
                         const r2 = getEffectiveRank(hand[i+1]);
 
-                        // Don't split triples or bombs - check if there's a 3rd/4th card of same rank (excluding wild cards)
-                        let hasMoreCards = false;
-                        if (i + 2 < hand.length) {
-                            const r3 = getEffectiveRank(hand[i+2]);
-                            // Check if third card has same rank (but not if it's a wild card being counted as same rank)
-                            if (r3 === r1 && !isHeartLevelCard(hand[i]) && !isHeartLevelCard(hand[i+1])) {
-                                hasMoreCards = true; // This is a triple or bomb, don't split
+                        if (r1 === r2 && r1 > targetRank) {
+                            // Check how many same-rank cards we have
+                            const sameRankCount = countSameRankCards(hand, i);
+                            // Only play pair if we have exactly 2 (don't split triples/bombs)
+                            if (sameRankCount === 2) {
+                                possiblePlays.push({cards: [hand[i], hand[i+1]], rank: r1, type: 'pair'});
+                                break;
                             }
-                        }
-
-                        if (r1 === r2 && r1 > targetRank && !hasMoreCards) {
-                            possiblePlays.push({cards: [hand[i], hand[i+1]], rank: r1, type: 'pair'});
-                            break; // Take first valid pair
                         }
                     }
                 } else if (targetType === 'triple') {
@@ -1277,19 +1284,14 @@
                         const r2 = getEffectiveRank(hand[i+1]);
                         const r3 = getEffectiveRank(hand[i+2]);
 
-                        // Don't split bombs - check if there's a 4th card of same rank (excluding wild cards)
-                        let isBomb = false;
-                        if (i + 3 < hand.length) {
-                            const r4 = getEffectiveRank(hand[i+3]);
-                            // Check if fourth card has same rank (only count non-wild cards)
-                            if (r4 === r1 && !isHeartLevelCard(hand[i]) && !isHeartLevelCard(hand[i+1]) && !isHeartLevelCard(hand[i+2])) {
-                                isBomb = true; // This is a bomb, don't split
+                        if (r1 === r2 && r2 === r3 && r1 > targetRank) {
+                            // Check how many same-rank cards we have
+                            const sameRankCount = countSameRankCards(hand, i);
+                            // Only play triple if we have exactly 3 (don't split bombs)
+                            if (sameRankCount === 3) {
+                                possiblePlays.push({cards: [hand[i], hand[i+1], hand[i+2]], rank: r1, type: 'triple'});
+                                break;
                             }
-                        }
-
-                        if (r1 === r2 && r2 === r3 && r1 > targetRank && !isBomb) {
-                            possiblePlays.push({cards: [hand[i], hand[i+1], hand[i+2]], rank: r1, type: 'triple'});
-                            break;
                         }
                     }
                 } else if (targetType === 'straight') {
