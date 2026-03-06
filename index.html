@@ -115,6 +115,8 @@
 
         .joker-text {
             font-size: 16px;
+            letter-spacing: 2px;
+            line-height: 1;
         }
 
         /* Mobile responsive */
@@ -145,6 +147,9 @@
             .joker-text {
                 font-size: 18px !important;
                 letter-spacing: 1px !important;
+                line-height: 1 !important;
+                -webkit-text-orientation: upright !important;
+                -webkit-writing-mode: vertical-rl !important;
             }
 
             #hand-cards {
@@ -806,13 +811,14 @@
                     jokerText.style.writingMode = 'vertical-rl';
                     jokerText.style.textOrientation = 'upright';
                     jokerText.style.fontWeight = 'bold';
-                    jokerText.style.letterSpacing = '2px';
                     jokerText.textContent = 'JOKER';
 
                     if (card.rank === 'BIG_JOKER') {
                         jokerText.style.color = '#000'; // Black for rank 98
+                        cardEl.classList.add('black');
                     } else {
                         jokerText.style.color = '#D32F2F'; // Red for rank 99
+                        cardEl.classList.add('red');
                     }
 
                     cardEl.appendChild(jokerText);
