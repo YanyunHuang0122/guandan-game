@@ -809,6 +809,7 @@
                     jokerText.style.writingMode = 'vertical-rl';
                     jokerText.style.textOrientation = 'upright';
                     jokerText.style.fontWeight = 'bold';
+                    jokerText.style.fontSize = window.innerWidth <= 1024 ? '10px' : '12px';
                     jokerText.textContent = 'JOKER';
 
                     const jokerIcon = document.createElement('div');
@@ -816,11 +817,13 @@
                     jokerIcon.style.marginLeft = '8px';
 
                     if (card.rank === 'BIG_JOKER') {
-                        jokerText.style.color = '#000'; // Black for rank 98
+                        // Big Joker = rank 99 (bigger, black)
+                        jokerText.style.color = '#000';
                         jokerIcon.textContent = '🃏';
                         cardEl.classList.add('black');
                     } else {
-                        jokerText.style.color = '#D32F2F'; // Red for rank 99
+                        // Small Joker = rank 98 (smaller, red)
+                        jokerText.style.color = '#D32F2F';
                         jokerIcon.textContent = '🎭';
                         cardEl.classList.add('red');
                     }
