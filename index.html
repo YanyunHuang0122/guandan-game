@@ -80,6 +80,7 @@
             vertical-align: bottom;
             position: relative;
             border: 2px solid #ddd;
+            z-index: 2;
         }
 
         .card:first-child {
@@ -87,10 +88,10 @@
         }
 
         .card.selected {
-            transform: translateY(40px);
+            transform: translateY(-40px);
             border: 3px solid #1976D2;
             box-shadow: 0 4px 8px rgba(25, 118, 210, 0.6);
-            z-index: 10;
+            z-index: 1;
         }
 
         .card:hover {
