@@ -787,21 +787,27 @@
                 cardEl.style.zIndex = idx;
 
                 if (card.rank === 'SMALL_JOKER' || card.rank === 'BIG_JOKER') {
-                    // Joker card - fill entire card with emoji
-                    cardEl.style.fontSize = '32px';
-                    cardEl.style.display = 'inline-flex';
-                    cardEl.style.alignItems = 'center';
-                    cardEl.style.justifyContent = 'center';
-                    cardEl.style.padding = '0';
-                    // Use same overlap as regular cards (handled by CSS)
-                    // Different icons for big vs small joker
+                    // Joker card - display "JOKER" vertically on left side
+                    cardEl.style.display = 'flex';
+                    cardEl.style.alignItems = 'flex-start';
+                    cardEl.style.justifyContent = 'flex-start';
+                    cardEl.style.padding = '6px 0 0 6px';
+
+                    const jokerText = document.createElement('div');
+                    jokerText.style.writingMode = 'vertical-rl';
+                    jokerText.style.textOrientation = 'upright';
+                    jokerText.style.fontSize = '16px';
+                    jokerText.style.fontWeight = 'bold';
+                    jokerText.style.letterSpacing = '2px';
+                    jokerText.textContent = 'JOKER';
+
                     if (card.rank === 'BIG_JOKER') {
-                        cardEl.textContent = '🃏'; // Big joker
-                        cardEl.style.color = '#000'; // Black
+                        jokerText.style.color = '#000'; // Black for rank 98
                     } else {
-                        cardEl.textContent = '🎭'; // Small joker - different icon
-                        cardEl.style.color = '#D32F2F'; // Red
+                        jokerText.style.color = '#D32F2F'; // Red for rank 99
                     }
+
+                    cardEl.appendChild(jokerText);
                 } else {
                     const rankEl = document.createElement('div');
                     rankEl.className = 'card-rank';
