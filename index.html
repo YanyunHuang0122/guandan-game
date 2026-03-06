@@ -113,6 +113,10 @@
             margin-top: 2px;
         }
 
+        .joker-text {
+            font-size: 16px;
+        }
+
         /* Mobile responsive */
         @media (max-width: 768px) {
             .card {
@@ -136,6 +140,10 @@
 
             .card-suit {
                 font-size: 26px !important;
+            }
+
+            .joker-text {
+                font-size: 14px !important;
             }
 
             #hand-cards {
@@ -788,15 +796,14 @@
 
                 if (card.rank === 'SMALL_JOKER' || card.rank === 'BIG_JOKER') {
                     // Joker card - display "JOKER" vertically on left side
-                    cardEl.style.display = 'flex';
+                    cardEl.style.display = 'inline-flex';
                     cardEl.style.alignItems = 'flex-start';
                     cardEl.style.justifyContent = 'flex-start';
-                    cardEl.style.padding = '6px 0 0 6px';
 
                     const jokerText = document.createElement('div');
+                    jokerText.className = 'joker-text';
                     jokerText.style.writingMode = 'vertical-rl';
                     jokerText.style.textOrientation = 'upright';
-                    jokerText.style.fontSize = '16px';
                     jokerText.style.fontWeight = 'bold';
                     jokerText.style.letterSpacing = '2px';
                     jokerText.textContent = 'JOKER';
