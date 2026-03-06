@@ -779,13 +779,9 @@
                 const cardEl = document.createElement('div');
                 cardEl.className = 'card ' + card.color;
 
-                // Right cards should cover left cards (higher idx = higher z-index)
-                // Selected cards get negative z-index so they're behind everything
-                if (selected.includes(idx)) {
-                    cardEl.style.zIndex = -1000 - idx;
-                } else {
-                    cardEl.style.zIndex = idx;
-                }
+                // Right cards always cover left cards (higher idx = higher z-index)
+                // This NEVER changes, even when selected
+                cardEl.style.zIndex = idx;
 
                 if (card.rank === 'SMALL_JOKER' || card.rank === 'BIG_JOKER') {
                     // Joker card - fill entire card with emoji
